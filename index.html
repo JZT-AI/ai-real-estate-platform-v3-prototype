@@ -1982,13 +1982,14 @@
                 <div class="flex-1 overflow-auto">
                     <div class="p-5 bg-slate-50 border-b border-slate-200">
                         <div class="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-                            <div><div class="text-xs text-slate-500">当前结果</div><div class="mt-1 text-lg font-semibold text-slate-900">{{ formatFactValue(selectedFact.value) }}</div></div>
+                            <div><div class="text-xs text-slate-500">当前结果</div><div class="mt-1 text-lg font-semibold text-slate-900">{{ formatFactValue(selectedFact.value) }}</div><div v-if="selectedFact.displayFormation" class="mt-2"><span class="rounded-full border px-2 py-0.5 text-xs font-medium" :class="communityFactMethodBadgeClass(selectedFact.displayFormation)">{{ selectedFact.displayFormation }}</span></div></div>
                             <div class="text-sm text-slate-500 sm:pt-1">平台更新时间：{{selectedFact.updatedAt || '-'}}</div>
                         </div>
-                        <div v-if="!hasEffectiveFactValue(selectedFact.value)" class="mt-3 border-t border-amber-200 pt-3 text-sm text-amber-800">原因：{{fieldDetailSourceRows.length ? '未形成当前值' : '当前没有已关联来源'}}</div>
+                        <div v-if="!hasEffectiveFactValue(selectedFact.value)" class="mt-3 border-t border-amber-200 pt-3 text-sm text-amber-800">原因：{{selectedFact.noValueReason || (fieldDetailSourceRows.length ? '未形成当前值' : '当前没有已关联来源')}}</div>
                     </div>
                     <div class="p-5 space-y-5">
-                        <section v-if="fieldDetailSourceRows.length && (!hasEffectiveFactValue(selectedFact.value) || fieldDetailSourceRows.length>1)" class="space-y-3">
+                        <section v-if="selectedFact.governanceDecision" class="rounded-lg border border-violet-200 bg-violet-50 p-4 text-sm text-violet-900"><div class="font-semibold">明确字段裁决</div><div class="mt-1">{{ selectedFact.governanceDecision.decision }} · {{ selectedFact.governanceDecision.context }} · {{ selectedFact.governanceDecision.time }}</div><div class="mt-1 text-xs">提交时保存的当前事实值快照及取值方式，优先于无明确裁决时的自动兜底规则。</div></section>
+                        <section v-if="selectedFact.displayFormation==='来源采用' && fieldDetailSourceRows.length && (!hasEffectiveFactValue(selectedFact.value) || fieldDetailSourceRows.length>1)" class="space-y-3">
                             <div>
                                 <h4 class="text-sm font-semibold text-slate-900">来源候选</h4>
                                 <p v-if="hasEffectiveFactValue(selectedFact.value)" class="mt-1 text-sm text-slate-500"><span>采用依据：</span><button v-if="selectedFact.task" @click="openSelectedFactTask" class="font-medium text-blue-600 hover:text-blue-900">{{fieldDetailAdoptionBasis}}</button><span v-else class="text-slate-700">{{fieldDetailAdoptionBasis}}</span></p>
@@ -2007,7 +2008,7 @@
                             </div>
                         </section>
 
-                        <section v-else-if="fieldDetailSourceRows.length===1" class="rounded-lg border border-slate-200 bg-white p-4">
+                        <section v-else-if="selectedFact.displayFormation==='来源采用' && fieldDetailSourceRows.length===1" class="rounded-lg border border-slate-200 bg-white p-4">
                             <div class="text-sm font-semibold text-slate-900">取值依据</div>
                             <div class="mt-3 text-sm"><span class="text-slate-500">来源名称：</span><span class="font-medium text-slate-900">{{fieldDetailSourceRows[0].source || '-'}}</span></div>
                         </section>
@@ -2016,9 +2017,11 @@
                             <div class="flex flex-wrap items-center justify-between gap-2"><h4 class="font-semibold text-indigo-900">人工导入候选</h4><span class="rounded border border-indigo-200 bg-white px-2 py-0.5 text-xs text-indigo-700">{{ selectedFact.displayFormation==='人工导入' ? '当前兜底采用' : '当前未采用' }}</span></div>
                             <div class="mt-2 break-words text-slate-800">{{ selectedFact.importCandidate.value }}</div>
                             <div class="mt-2 text-xs text-slate-600">批次 {{ selectedFact.importCandidate.batchId }} · {{ selectedFact.importCandidate.operator }} · {{ selectedFact.importCandidate.time }}</div>
-                            <div v-if="selectedFact.displayFormation!=='人工导入'" class="mt-2 text-xs text-slate-600">已有来源采用或生产方案结果，导入候选暂不改变当前值。</div>
+                            <div v-if="selectedFact.displayFormation==='人工导入'" class="mt-2 text-xs text-slate-600">{{ selectedFact.productionPlan ? '已配置的生产方案未形成有效结果，当前由人工导入兜底。' : '来源采用未形成有效结果，当前由人工导入兜底。' }}</div>
+                            <div v-else class="mt-2 text-xs text-slate-600">{{ selectedFact.governanceDecision ? '当前采用明确字段裁决；导入候选仅保留备查。' : selectedFact.productionPlan ? '生产方案已有有效结果；导入候选暂不改变当前值。' : '来源采用已有有效结果；导入候选暂不改变当前值。' }}</div>
                             <button @click="openCommunityImportIssue(selectedFact)" class="mt-3 font-medium text-blue-700 hover:underline">提交质量问题</button>
                         </section>
+                        <section v-if="communityImportCandidateHistoryFor(activeItem?.id,selectedFact.name).length" class="overflow-hidden rounded-lg border border-slate-200 bg-white text-sm"><div class="border-b border-slate-200 bg-slate-50 px-4 py-3 font-semibold text-slate-900">人工导入版本记录</div><div v-for="(entry,index) in communityImportCandidateHistoryFor(activeItem?.id,selectedFact.name)" :key="index" class="border-b border-slate-100 px-4 py-3 last:border-b-0"><div class="font-medium text-slate-800">{{ entry.type }} · {{ entry.type==='撤回' ? '候选已撤回' : entry.value }}</div><div v-if="entry.previousValue!==null && entry.previousValue!==undefined" class="mt-1 text-xs text-slate-600">原导入值：{{ entry.previousValue }}</div><div class="mt-1 text-xs text-slate-500">{{ entry.batchId }} · {{ entry.operator }} · {{ entry.time }}</div></div></section>
 
                         <section v-if="fieldDetailHistoryRows.length" class="overflow-hidden rounded-lg border border-slate-200 bg-white">
                             <div class="border-b border-slate-200 bg-slate-50 px-4 py-3"><div class="text-sm font-semibold text-slate-900">历史记录</div></div>
@@ -2479,7 +2482,7 @@
                         </div>
                     </div>
                     <div class="rounded-lg border border-blue-100 bg-blue-50 px-4 py-3 text-sm text-slate-700">
-                        <span class="font-semibold text-blue-800">模板填写规则</span>：主小区 ID 必填；每个业务字段占一列，按该字段现有格式整格填写，看房量等不拆统计期。空白跳过，填写“【清除导入值】”才撤回导入候选。图片字段填写可访问链接，不粘贴图片文件。
+                        <span class="font-semibold text-blue-800">模板填写规则</span>：主小区 ID 必填；每个业务字段占一列，按字段格式填写。空白跳过，填写“【清除导入值】”才撤回导入候选。图片字段填写可访问链接，不粘贴图片文件。
                     </div>
                     <div class="flex flex-wrap items-center gap-3">
                         <button @click="downloadCommunityImportTemplate" :disabled="communityImportBusy" class="h-10 rounded-md bg-blue-600 px-4 text-sm font-medium text-white disabled:cursor-not-allowed disabled:bg-slate-300">{{ communityImportBusy ? '生成中…' : '下载 Excel 模板' }}</button>
@@ -2510,7 +2513,8 @@
                 </div>
                 <div v-else-if="communityImportStage==='history'" class="space-y-4">
                     <div class="flex items-center justify-between"><h3 class="text-base font-semibold text-slate-900">当前城市导入记录</h3><button @click="communityImportStage='setup'" class="text-sm font-medium text-blue-700">发起批量导入</button></div>
-                    <div class="overflow-auto rounded-lg border border-slate-200"><table class="min-w-[800px] w-full text-left text-sm"><thead class="bg-slate-50 text-xs text-slate-500"><tr><th class="px-4 py-3">批次</th><th class="px-4 py-3">文件</th><th class="px-4 py-3">城市</th><th class="px-4 py-3">成功小区 / 字段数据</th><th class="px-4 py-3">错误小区</th><th class="px-4 py-3">提交时间</th></tr></thead><tbody class="divide-y divide-slate-100"><tr v-for="record in communityImportCityRecords" :key="record.id"><td class="px-4 py-3 font-medium text-slate-800">{{ record.id }}</td><td class="px-4 py-3 text-slate-700">{{ record.fileName }}</td><td class="px-4 py-3">{{ record.city }}</td><td class="px-4 py-3">{{ record.validCommunities }} / {{ record.operations }}</td><td class="px-4 py-3">{{ record.errorCommunities }}</td><td class="px-4 py-3 text-slate-500">{{ record.time }}</td></tr><tr v-if="!communityImportCityRecords.length"><td colspan="6" class="px-4 py-10 text-center text-slate-500">当前城市暂无导入记录</td></tr></tbody></table></div>
+                    <div class="overflow-auto rounded-lg border border-slate-200"><table class="min-w-[920px] w-full text-left text-sm"><thead class="bg-slate-50 text-xs text-slate-500"><tr><th class="px-4 py-3">批次</th><th class="px-4 py-3">文件</th><th class="px-4 py-3">上传 / 成功 / 错误 / 跳过</th><th class="px-4 py-3">成功字段</th><th class="px-4 py-3">提交人 / 时间</th><th class="px-4 py-3">操作</th></tr></thead><tbody class="divide-y divide-slate-100"><tr v-for="record in communityImportCityRecords" :key="record.id"><td class="px-4 py-3 font-medium text-slate-800">{{ record.id }}</td><td class="px-4 py-3 text-slate-700">{{ record.fileName }}</td><td class="px-4 py-3">{{ record.totalCommunities }} / {{ record.validCommunities }} / {{ record.errorCommunities }} / {{ record.skippedCommunities }}</td><td class="px-4 py-3">{{ record.operations }}</td><td class="px-4 py-3 text-slate-500">{{ record.operator }}<br>{{ record.time }}</td><td class="px-4 py-3"><button @click="communityImportActiveRecordId=communityImportActiveRecordId===record.id?'':record.id" class="font-medium text-blue-700 hover:underline">{{ communityImportActiveRecordId===record.id ? '收起' : '查看明细' }}</button></td></tr><tr v-if="!communityImportCityRecords.length"><td colspan="6" class="px-4 py-10 text-center text-slate-500">当前城市暂无导入记录</td></tr></tbody></table></div>
+                    <div v-if="communityImportActiveRecord" class="rounded-lg border border-slate-200 bg-white"><div class="border-b border-slate-200 bg-slate-50 px-4 py-3 text-sm font-semibold text-slate-800">{{ communityImportActiveRecord.id }} · 逐小区结果</div><div class="max-h-[350px] overflow-auto"><table class="min-w-[800px] w-full text-left text-sm"><thead class="sticky top-0 bg-white text-xs text-slate-500"><tr><th class="px-4 py-3">主小区</th><th class="px-4 py-3">结果</th><th class="px-4 py-3">填写位置与字段明细</th><th class="px-4 py-3">问题原因</th></tr></thead><tbody class="divide-y divide-slate-100"><tr v-for="row in communityImportActiveRecord.details" :key="row.communityId"><td class="px-4 py-3"><div class="font-medium">{{ row.communityName }}</div><div class="text-xs text-slate-500">{{ row.communityId }}</div></td><td class="px-4 py-3">{{ row.status }}</td><td class="px-4 py-3"><div v-for="(field,index) in row.fields" :key="index" class="mb-1 last:mb-0">{{ field.location }} · {{ field.field }}：{{ field.type==='clear' ? '撤回导入候选' : field.type==='error' ? '校验错误' : field.type==='unchanged' ? '无变化' : field.type==='skip' ? '跳过' : '写入 '+field.value }}</div><span v-if="!row.fields?.length">{{ row.locations || '-' }}</span></td><td class="px-4 py-3" :class="row.status==='错误' ? 'text-red-700' : 'text-slate-500'">{{ row.status==='错误' ? row.fullReason : '-' }}</td></tr></tbody></table></div></div>
                 </div>
             </div>
             <footer v-if="communityImportStage==='preview'" class="flex shrink-0 items-center justify-between gap-3 border-t border-slate-200 bg-slate-50 px-6 py-4">
@@ -2964,10 +2968,15 @@ const COMMUNITY_IMPORT_FIELDS = COMMUNITY_FIELD_CATALOG.flatMap(([group,names])=
 const COMMUNITY_IMPORT_FIELD_NAMES = new Set(COMMUNITY_IMPORT_FIELDS.map(item=>item.name));
 const COMMUNITY_IMPORT_CLEAR = '【清除导入值】';
 const COMMUNITY_IMPORT_IMAGE_FIELDS = new Set(['小区实景图片']);
+const COMMUNITY_IMPORT_NUMBER_FIELDS = {'经度':{example:'118.7962',min:-180,max:180},'纬度':{example:'32.0668',min:-90,max:90},'容积率':{example:'2.30',min:0}};
+const COMMUNITY_IMPORT_ENUM_FIELDS = {'人车分流':['是','否'],'是否封闭':['是','否']};
 const communityImportFieldRule = name => {
-    if(COMMUNITY_IMPORT_IMAGE_FIELDS.has(name)) return {kind:'image',hint:'每行一个可访问的图片 URL；不能在 Excel 单元格中粘贴图片文件',example:'https://example.com/community.jpg'};
+    if(COMMUNITY_IMPORT_IMAGE_FIELDS.has(name)) return {kind:'image',hint:'图片链接',example:'https://example.com/community.jpg'};
+    if(COMMUNITY_IMPORT_NUMBER_FIELDS[name]) return {kind:'number',hint:'数值',example:COMMUNITY_IMPORT_NUMBER_FIELDS[name].example,...COMMUNITY_IMPORT_NUMBER_FIELDS[name]};
+    if(COMMUNITY_IMPORT_ENUM_FIELDS[name]) return {kind:'enum',hint:'枚举：'+COMMUNITY_IMPORT_ENUM_FIELDS[name].join(' / '),example:COMMUNITY_IMPORT_ENUM_FIELDS[name][0],options:COMMUNITY_IMPORT_ENUM_FIELDS[name]};
     const sample=REAL_COMMUNITY_FACTS.find(item=>item.name===name && !['无数据','-','--'].includes(String(item.value)))?.value;
-    return {kind:'text',hint:'按主小区该字段现有格式填写；整格作为一个字段值，不拆单位或统计期',example:sample || '按字段现有格式填写'};
+    const metric=/（周）|（月）|均价|成交|看房|挂牌率|换手率|涨跌幅|在售套数|在租套数|总户数|楼栋数|固定车位|物业费|停车费|绿化率/.test(name);
+    return {kind:'text',hint:'字符串',example:sample || (metric?'按现有展示格式填写':'文字内容')};
 };
 const COMMUNITY_FIELD_NAME_MAP = {
     '供暖方式':'供暖类型',
@@ -3803,7 +3812,11 @@ createApp({
             communityImportOpen:false,communityImportStage:'setup',communityImportBusy:false,communityImportError:'',
             communityImportTemplateMode:'filtered',communityImportFields:[],communityImportKeyword:'',communityImportGroup:'全部',
             communityImportFileName:'',communityImportPreviewCity:'',communityImportPreviewRows:[],communityImportPreviewFilter:'all',
-            communityImportPreviewSignature:'',communityImportRecords:[],communityImportCandidates:{},communityImportLastResult:null,communityImportIssueDialog:null,
+            communityImportPreviewSignature:'',communityImportActiveRecordId:'',
+            communityImportRecords:[{id:'IMP-DEMO-001',city:'南京市',fileName:'南京市-历史小区补充.xlsx',time:'2026-10-08 10:20',operator:'张明',totalCommunities:1,validCommunities:1,skippedCommunities:0,operations:3,errorCommunities:0,details:[{communityId:'MC-NJ-10294',communityName:'溪语悦庭',status:'可导入',locations:'数据填写!4',fullReason:'校验通过',fields:[{field:'开发商',type:'update',value:'南京溪庭置业有限公司',location:'数据填写!4'},{field:'看房量（月）',type:'update',value:'18次（26年09月数据）',location:'数据填写!4'},{field:'物业类型',type:'update',value:'普通住宅',location:'数据填写!4'}]}]}],
+            communityImportCandidates:{'MC-NJ-10294::开发商::':{value:'南京溪庭置业有限公司',batchId:'IMP-DEMO-001',time:'2026-10-08 10:20',operator:'张明'},'MC-NJ-10294::看房量（月）::':{value:'18次（26年09月数据）',batchId:'IMP-DEMO-001',time:'2026-10-08 10:20',operator:'张明'},'MC-NJ-10294::物业类型::':{value:'普通住宅',batchId:'IMP-DEMO-001',time:'2026-10-08 10:20',operator:'张明'}},
+            communityImportCandidateHistory:{'MC-NJ-10294::开发商::':[{batchId:'IMP-DEMO-001',time:'2026-10-08 10:20',operator:'张明',type:'写入',value:'南京溪庭置业有限公司'}],'MC-NJ-10294::看房量（月）::':[{batchId:'IMP-DEMO-001',time:'2026-10-08 10:20',operator:'张明',type:'写入',value:'18次（26年09月数据）'}],'MC-NJ-10294::物业类型::':[{batchId:'IMP-DEMO-001',time:'2026-10-08 10:20',operator:'张明',type:'写入',value:'普通住宅'}]},
+            communityFactDecisions:{},communityImportLastResult:null,communityImportIssueDialog:null,
             toastText:''
         }
     },
@@ -3832,6 +3845,7 @@ createApp({
             return COMMUNITY_IMPORT_FIELDS.filter(item=>(this.communityImportGroup==='全部'||item.group===this.communityImportGroup)&&(!keyword||item.name.includes(keyword)))
         },
         communityImportCityRecords(){return this.communityImportRecords.filter(item=>item.city===this.currentCity)},
+        communityImportActiveRecord(){return this.communityImportCityRecords.find(item=>item.id===this.communityImportActiveRecordId) || null},
         communityImportPreviewFilters(){return [{value:'all',label:'全部'},{value:'valid',label:'可导入'},{value:'error',label:'错误需修正'},{value:'skip',label:'无需导入'}]},
         communityImportValidationRows(){
             const groups=new Map();
@@ -4756,11 +4770,11 @@ createApp({
                 guide.addRow(['填写原则','仅导入当前城市已有主小区；主小区 ID 必填。可删除预填行或追加本城市 ID。']);
                 guide.addRow(['空白','业务字段留空表示跳过，不清空已有导入候选。']);
                 guide.addRow(['清除',COMMUNITY_IMPORT_CLEAR+' 仅撤回该字段人工导入候选，不强制当前值为空。']);
-                guide.addRow(['字段格式','每个业务字段占一列，按主小区现有字段格式整格填写；例如看房量与统计期不拆列。']);
+                guide.addRow(['字段格式','每个业务字段占一列；下方逐字段标明数据格式和填写示例。']);
                 guide.addRow(['图片','图片字段填写可访问的 http(s) 链接；多张图片一行一个链接，不粘贴图片文件。']);
                 guide.addRow(['确认','上传只生成预览，运营核对后点击确认导入才正式写入。']);
                 guide.addRow([]);
-                guide.addRow(['字段','类型/格式','示例','分组']);
+                guide.addRow(['字段','数据格式','示例','分组']);
                 this.communityImportFields.forEach(name=>{
                     const rule=communityImportFieldRule(name);
                     const meta=COMMUNITY_IMPORT_FIELDS.find(item=>item.name===name);
@@ -4781,6 +4795,11 @@ createApp({
                     const rule=communityImportFieldRule(name);
                     main.getCell(2,column).value=name;
                     main.getCell(3,column).value=rule.hint;
+                    if(rule.kind==='enum'){
+                        const letter=main.getColumn(column).letter;
+                        main.dataValidations.add(`${letter}4:${letter}1048576`,{type:'list',allowBlank:true,formulae:['"'+rule.options.join(',')+'"'],showErrorMessage:true,errorTitle:'请使用允许的枚举值',error:'允许值：'+rule.options.join('、')})
+                    }
+                    if(rule.kind==='number') main.getColumn(column).numFmt='0.########';
                     main.getColumn(column).width=Math.max(22,Math.min(46,name.length*2+12));
                     column+=1
                 }
@@ -4809,6 +4828,8 @@ createApp({
                 .map(([,candidate])=>candidate)
                 .sort((a,b)=>String(b.time).localeCompare(String(a.time)))[0] || null
         },
+        communityImportCandidateHistoryFor(id,field){return this.communityImportCandidateHistory[this.communityImportCandidateKey(id,COMMUNITY_FIELD_NAME_MAP[field] || field)] || []},
+        communityFactDecisionKey(id,field){return [id,field].join('::')},
         communityImportCandidateCount(id){return Object.keys(this.communityImportCandidates).filter(key=>key.startsWith(String(id)+'::')).length},
         openCommunityImportIssue(field){this.communityImportIssueDialog={field,note:''}},
         submitCommunityImportIssue(){
@@ -4819,6 +4840,8 @@ createApp({
             this.toast('质量问题已提交')
         },
         communityImportBaseFact(id,field){
+            const decision=this.communityFactDecisions[this.communityFactDecisionKey(id,field)];
+            if(decision) return {value:decision.value,method:decision.method,decision};
             const item=this.communityImportKnownCommunity(id);
             if(!item) return {value:null,method:'来源采用'};
             let fact=null;
@@ -4833,6 +4856,12 @@ createApp({
             const value=this.communityImportCellText(raw).trim();
             if(value===COMMUNITY_IMPORT_CLEAR) return {valid:true,clear:true,value:null};
             const rule=communityImportFieldRule(field);
+            if(rule.kind==='enum' && !rule.options.includes(value)) return {valid:false,reason:'枚举值仅允许：'+rule.options.join('、')};
+            if(rule.kind==='number'){
+                const number=Number(value);
+                if(!/^-?\d+(?:\.\d+)?$/.test(value) || !Number.isFinite(number)) return {valid:false,reason:'请填写数值（小数，不带单位）'};
+                if((rule.min!==undefined && number<rule.min)||(rule.max!==undefined && number>rule.max)) return {valid:false,reason:`数值范围为 ${rule.min ?? '不限'} 至 ${rule.max ?? '不限'}`}
+            }
             if(rule.kind==='image'){
                 const links=value.split(/\r?\n/).map(item=>item.trim()).filter(Boolean);
                 if(!links.length || links.some(link=>!/^https?:\/\/\S+$/i.test(link))) return {valid:false,reason:'每行填写一个完整的 http(s) 图片链接；不能粘贴图片文件或填写本地路径'}
@@ -4967,12 +4996,20 @@ createApp({
             const valid=this.communityImportPreviewRows.filter(item=>['update','clear'].includes(item.type));
             const time=new Date().toLocaleString('zh-CN',{hour12:false});
             const batchId='IMP-'+Date.now().toString().slice(-10);
+            const details=this.communityImportValidationRows.map(group=>({
+                communityId:group.communityId,communityName:group.communityName,status:group.status,locations:group.fullLocations,fullReason:group.fullReason,
+                fields:this.communityImportPreviewRows.filter(row=>row.communityId===group.communityId).map(row=>({field:row.rawField || row.field,type:row.type,value:row.operation?.value || '',location:row.location,note:row.note}))
+            }));
             valid.forEach(row=>{
+                const previous=this.communityImportCandidates[row.candidateKey];
+                if(!this.communityImportCandidateHistory[row.candidateKey]) this.communityImportCandidateHistory[row.candidateKey]=[];
+                this.communityImportCandidateHistory[row.candidateKey].unshift({batchId,time,operator:'张明',type:row.operation.clear?'撤回':previous?'更新':'写入',value:row.operation.value,previousValue:previous?.value ?? null});
                 if(row.operation.clear) delete this.communityImportCandidates[row.candidateKey];
                 else this.communityImportCandidates[row.candidateKey]={value:row.operation.value,period:row.period,batchId,time,operator:'张明'}
             });
-            const record={id:batchId,city:this.currentCity,fileName:this.communityImportFileName,time,operator:'张明',validCommunities:this.communityImportSummary.validCommunities,operations:valid.length,errorCommunities:this.communityImportSummary.errorCommunities,details:valid.map(item=>({...item}))};
+            const record={id:batchId,city:this.currentCity,fileName:this.communityImportFileName,time,operator:'张明',totalCommunities:this.communityImportSummary.totalCommunities,validCommunities:this.communityImportSummary.validCommunities,skippedCommunities:this.communityImportSummary.skippedCommunities,operations:valid.length,errorCommunities:this.communityImportSummary.errorCommunities,details};
             this.communityImportRecords.unshift(record);
+            this.communityImportActiveRecordId=record.id;
             this.communityImportLastResult=record;
             this.communityImportStage='result';
             this.toast('批量导入已确认')
@@ -5166,7 +5203,9 @@ createApp({
 	            const groupMap={'基础区位':'区位信息','市场表现':'市场行情'};
 	            const group=item.name==='小区图片' ? '小区内容' : (groupMap[item.group] || item.group);
 	            const missing=item.status==='暂无来源数据' || !hasFactValue(item.value);
-            const importCandidate=this.communityImportCandidateFor(this.activeItem?.id,COMMUNITY_FIELD_NAME_MAP[item.name] || item.name);
+            const catalogName=COMMUNITY_FIELD_NAME_MAP[item.name] || item.name;
+            const importCandidate=this.communityImportCandidateFor(this.activeItem?.id,catalogName);
+            const governanceDecision=this.communityFactDecisions[this.communityFactDecisionKey(this.activeItem?.id,catalogName)] || null;
             const imported=missing && importCandidate && this.communityImportHasValue(importCandidate.value);
                 const productionPlanMap={
                     '挂牌均价（月）':'主小区市场行情生产',
@@ -5184,13 +5223,15 @@ createApp({
                 const historyMeta=String(item.sourceId)==='4120022661307956' ? (COMMUNITY_METRIC_HISTORY[item.name] || null) : null;
 	            return {
 	                ...item,
-	                value:imported ? importCandidate.value : (missing ? null : item.value),
+	                value:governanceDecision ? governanceDecision.value : (imported ? importCandidate.value : (missing ? null : item.value)),
 	                rawValue:item.rawValue ?? (missing ? null : item.value),
 	                group,
-	                displayFormation:imported ? '人工导入' : (productionPlan ? '生产方案' : '来源采用'),
+	                displayFormation:governanceDecision?.method || (imported ? '人工导入' : missing ? '未形成' : (productionPlan ? '生产方案' : '来源采用')),
                 importCandidate,
+	                governanceDecision,
 	                productionPlan,
 	                noValueReason:missing ? (productionPlan?'无可用输入':'未形成当前值') : '',
+	                updatedAt:governanceDecision?.time || (imported ? importCandidate.time : item.updatedAt),
 	                version:'',
 	                method:'',
 	                inputs:'',
@@ -5200,7 +5241,7 @@ createApp({
 	            }
 	        },
         openCommunityFactDetail(item){
-            if(!item.productionPlan){this.openFieldSources(item);return}
+            if(item.importCandidate || item.governanceDecision || this.communityImportCandidateHistoryFor(this.activeItem?.id,item.name).length || !item.productionPlan){this.openFieldSources(item);return}
             const method=item.productionPlan?'生产方案':'来源采用';
             const isRecentTransactionDetail=item.name==='最近成交明细';
             const transactionMatchedNames=[...new Set(this.communityTransactions.map(row=>row.matchedName).filter(Boolean))].join('、');
@@ -5676,11 +5717,13 @@ createApp({
             const ordinaryRows=[...labelSet].map(label=>{
                 const sourceValue=sourceMap.get(label) || '--';
                 const currentValue=label==='小区名称' ? (this.activeComparisonTarget?.title || targetMap.get(label) || '--') : (targetMap.get(label) || '--');
-                const imported=this.communityImportCandidateFor(this.activeComparisonTarget?.id,COMMUNITY_FIELD_NAME_MAP[label] || label);
-                const effectiveValue=mode==='init' ? '空值' : (this.isMissingCommunityValue(currentValue) && imported ? imported.value : currentValue);
+                const catalogName=COMMUNITY_FIELD_NAME_MAP[label] || label;
+                const decision=this.communityFactDecisions[this.communityFactDecisionKey(this.activeComparisonTarget?.id,catalogName)];
+                const imported=this.communityImportCandidateFor(this.activeComparisonTarget?.id,catalogName);
+                const effectiveValue=mode==='init' ? '空值' : (decision ? decision.value : this.isMissingCommunityValue(currentValue) && imported ? imported.value : currentValue);
                 const currentEmpty = mode==='init' || this.isMissingCommunityValue(effectiveValue);
                 const fieldMeta=targetFields.find(item=>item.label===label);
-                const currentMethod=currentEmpty ? '无当前值' : imported && String(imported.value)===String(effectiveValue) ? '人工导入' : fieldMeta?.method || fieldMeta?.formation || '来源采用';
+                const currentMethod=currentEmpty ? '无当前值' : decision?.method || (imported && String(imported.value)===String(effectiveValue) ? '人工导入' : fieldMeta?.method || fieldMeta?.formation || '来源采用');
                 return {
                     name:this.communityFactDisplayName(label),
                     type:'普通事实字段',
@@ -5892,17 +5935,12 @@ createApp({
             base.updatedAt='2026-06-25 16:30';
             base.confirmedAt='2026-06-25 16:30';
             source.mergedInto=base.id;
-            const changedFields=this.mergeFieldRows.filter(item=>item.type==='普通事实字段'&&item.choice==='source');
             const decisionSummary=this.mergeFieldRows.map(field=>`${field.name}：${this.mergeFieldDecisionLabel(field)}`).join('；');
-            changedFields.forEach(field=>{
-                const fact=this.communityFacts.find(item=>item.name===field.name);
-                if(fact){
-                    fact.value=field.sourceValue;
-                    fact.source=field.sourceSource;
-                    fact.formation='人工裁决';
-                    fact.status='无来源差异';
-                    fact.updatedAt='2026-06-25 16:30'
-                }
+            const time=new Date().toLocaleString('zh-CN',{hour12:false});
+            this.mergeFieldRows.filter(item=>item.type==='普通事实字段').forEach(field=>{
+                const takeSource=field.choice==='source';
+                const name=field.name==='标准小区名'?'小区名称':field.name;
+                this.communityFactDecisions[this.communityFactDecisionKey(base.id,name)]={value:takeSource?field.sourceValue:field.baseValue,method:takeSource?field.sourceMethod:field.baseMethod,decision:takeSource?'采用被合并主小区事实值':'保留基准主小区事实值',context:'主小区合并 '+source.id,time,source:takeSource?field.sourceSource:field.baseSource}
             });
             this.mergeFieldRows.filter(item=>item.type==='小区别名字段').forEach(field=>{
                 const fact=this.communityFacts.find(item=>item.name===field.name);
@@ -5944,6 +5982,7 @@ createApp({
             this.fieldPanelOpen=true
         },
         isFieldDetailCurrentSource(source){
+            if(this.selectedFact?.displayFormation==='人工导入' || this.selectedFact?.governanceDecision?.method==='人工导入') return false;
             if(!hasFactValue(this.selectedFact?.value)) return false;
             return String(source?.sourceId || '')===String(this.selectedFact?.sourceId || '') || Boolean(source?.checks?.includes('当前采用'))
         },
@@ -6198,6 +6237,15 @@ createApp({
             this.activeItem.relation='已挂接';
             const mode=this.activeItem.attachDecision || 'current';
             const target=this.activeComparisonTarget;
+            if(target?.id && target.id!=='NEW-COMMUNITY-PREVIEW'){
+                const time=new Date().toLocaleString('zh-CN',{hour12:false});
+                this.activeCommunityImpactRows.filter(row=>row.type==='普通事实字段').forEach(row=>{
+                    const keep=row.selectedSourceId==='__current__';
+                    const selected=row.sourceOptions?.find(option=>option.sourceId===row.selectedSourceId);
+                    const name=COMMUNITY_FIELD_NAME_MAP[row.compareLabel] || row.compareLabel;
+                    this.communityFactDecisions[this.communityFactDecisionKey(target.id,name)]={value:keep?row.current:selected?.value || null,method:keep?row.currentMethod:'来源采用',decision:keep?'保留主小区事实值':'采用来源小区值',context:'来源挂接审核 '+this.activeItem.id,time,source:keep?row.currentSource:selected?.source || ''}
+                })
+            }
             this.activeItem.currentMaster=target?.title || this.activeItem.currentMaster || '';
             this.activeItem.candidateMaster=target?.title || this.activeItem.candidateMaster || '';
             if(target?.id && target.id!=='NEW-COMMUNITY-PREVIEW') this.activeItem.masterIds=[target.id];
