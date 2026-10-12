@@ -1290,7 +1290,7 @@
                         </panel>
                     </div>
                     <panel title="事实字段采用">
-                        <div class="px-5 py-3 bg-slate-50 border-b border-slate-200 text-sm text-slate-600">沿用双方当前事实值的裁决，并标注取值方式。人工导入候选不作为独立选项；合并后只保留基准主小区的导入候选，被合并方候选不迁移。</div>
+                        <div class="px-5 py-3 bg-slate-50 border-b border-slate-200 text-sm text-slate-600">沿用双方当前事实值的裁决，并标注取值方式。人工导入候选不作为独立选项；合并后只保留基准主小区的导入候选，被合并方候选不迁移。若裁决结果为空，基准主小区的有效导入数据可兜底。</div>
                         <div class="overflow-x-auto">
                             <table class="min-w-full divide-y divide-slate-200">
                                 <thead class="bg-slate-50"><tr><th v-for="h in ['字段','字段类型','基准值与来源','被合并对象值与来源','合并后采用']" :key="h" class="px-5 py-3 text-left text-xs font-medium text-slate-500 whitespace-nowrap">{{ h }}</th></tr></thead>
@@ -1342,7 +1342,7 @@
                         <div class="px-5 py-4 border-b border-slate-200"><h3 class="font-semibold text-slate-900">确认执行</h3></div>
                         <div class="p-5 space-y-4">
                             <div class="rounded-lg bg-amber-50 border border-amber-200 p-4 text-sm text-amber-800 leading-6">合并后被合并主小区不再正常使用。一期不提供页面撤销，误合并需线下处理。</div>
-                            <div class="rounded-lg border border-indigo-200 bg-indigo-50 p-4 text-sm text-indigo-900 leading-6">人工导入候选只保留基准主小区一方。被合并方已有 {{ communityImportCandidateCount(mergeSourceCommunity?.id) }} 个导入字段候选不会迁移；若基准方和来源/方案都无有效值，相关字段合并后可能为空。</div>
+                            <div class="rounded-lg border border-indigo-200 bg-indigo-50 p-4 text-sm text-indigo-900 leading-6">人工导入候选只保留基准主小区一方。被合并方已有 {{ communityImportCandidateCount(mergeSourceCommunity?.id) }} 个导入字段候选不会迁移；裁决结果为空时，基准方有有效导入数据则兜底，否则仍为空。</div>
                             <label class="block"><span class="block text-xs font-medium text-slate-500 mb-1">合并原因</span><textarea v-model="mergeReason" rows="5" class="w-full border border-slate-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="请填写确认两个主小区为同一真实小区的依据"></textarea></label>
                             <label class="flex items-start gap-2 text-sm text-slate-600 cursor-pointer"><input type="checkbox" v-model="mergeConfirmed" class="mt-1"><span>我已核对关系迁移和字段采用结果。</span></label>
                             <button @click="executeCommunityMerge" :disabled="!canExecuteCommunityMerge" class="w-full px-4 py-2 rounded-md text-sm font-medium" :class="canExecuteCommunityMerge ? 'bg-red-600 text-white hover:bg-red-700' : 'bg-slate-200 text-slate-400 cursor-not-allowed'">确认合并主小区</button>
@@ -1964,7 +1964,7 @@
                         <div v-if="!hasEffectiveFactValue(selectedFact.value)" class="mt-3 border-t border-amber-200 pt-3 text-sm text-amber-800">原因：{{selectedFact.noValueReason || (fieldDetailSourceRows.length ? '未形成当前值' : '当前没有已关联来源')}}</div>
                     </div>
                     <div class="p-5 space-y-5">
-                        <section v-if="selectedFact.governanceDecision" class="rounded-lg border border-violet-200 bg-violet-50 p-4 text-sm text-violet-900"><div class="font-semibold">明确字段裁决</div><div class="mt-1">{{ selectedFact.governanceDecision.decision }} · {{ selectedFact.governanceDecision.context }} · {{ selectedFact.governanceDecision.time }}</div><div class="mt-1 text-xs">提交时保存的当前事实值快照及取值方式，优先于无明确裁决时的自动兜底规则。</div></section>
+                        <section v-if="selectedFact.governanceDecision" class="rounded-lg border border-violet-200 bg-violet-50 p-4 text-sm text-violet-900"><div class="font-semibold">明确字段裁决</div><div class="mt-1">{{ selectedFact.governanceDecision.decision }} · {{ selectedFact.governanceDecision.context }} · {{ selectedFact.governanceDecision.time }}</div><div v-if="selectedFact.importFallbackAfterDecision" class="mt-1 text-xs">本次裁决结果为空，当前由目标主小区的人工导入数据兜底；原裁决记录保留。</div><div v-else class="mt-1 text-xs">提交时保存的当前事实值快照及取值方式；裁决结果有效时继续采用该结果。</div></section>
                         <section v-if="selectedFact.displayFormation==='来源采用' && fieldDetailSourceRows.length && (!hasEffectiveFactValue(selectedFact.value) || fieldDetailSourceRows.length>1)" class="space-y-3">
                             <div>
                                 <h4 class="text-sm font-semibold text-slate-900">来源候选</h4>
@@ -1993,7 +1993,7 @@
                             <div class="flex flex-wrap items-center justify-between gap-2"><h4 class="font-semibold text-indigo-900">最新人工导入数据</h4><span v-if="selectedFact.displayFormation==='人工导入'" class="rounded border border-indigo-200 bg-white px-2 py-0.5 text-xs text-indigo-700">当前采用</span></div>
                             <div class="mt-2 break-words text-slate-800">{{ selectedFact.importCandidate.value }}</div>
                             <div class="mt-2 text-xs text-slate-600">批次 {{ selectedFact.importCandidate.batchId }} · {{ selectedFact.importCandidate.operator }} · {{ selectedFact.importCandidate.time }}</div>
-                            <div v-if="selectedFact.displayFormation==='人工导入'" class="mt-2 text-xs text-slate-600">{{ selectedFact.productionPlan ? '已配置的生产方案未形成有效结果，当前由人工导入兜底。' : '来源采用未形成有效结果，当前由人工导入兜底。' }}</div>
+                            <div v-if="selectedFact.displayFormation==='人工导入'" class="mt-2 text-xs text-slate-600">{{ selectedFact.importFallbackAfterDecision ? '挂接或合并的字段裁决结果为空，当前由人工导入兜底。' : selectedFact.productionPlan ? '已配置的生产方案未形成有效结果，当前由人工导入兜底。' : '来源采用未形成有效结果，当前由人工导入兜底。' }}</div>
                             <div v-else class="mt-2 text-xs text-slate-600">{{ selectedFact.governanceDecision ? '当前采用明确字段裁决；导入候选仅保留备查。' : selectedFact.productionPlan ? '生产方案已有有效结果；导入候选暂不改变当前值。' : '来源采用已有有效结果；导入候选暂不改变当前值。' }}</div>
                         </section>
 
@@ -4811,6 +4811,11 @@ createApp({
             finally{this.communityImportBusy=false}
         },
         communityImportHasValue(value){return ![null,undefined,'','-','--','无数据','暂无数据','空值'].includes(value)},
+        communityDecisionAllowsImportFallback(decision){
+            if(!decision) return true;
+            if(this.communityImportHasValue(decision.value)) return false;
+            return ['来源挂接审核 ','主小区合并 '].some(prefix=>String(decision.context || '').startsWith(prefix))
+        },
         communityImportKnownCommunity(id){return this.communities.find(item=>item.id===id) || this.legacyCommunities.find(item=>item.id===id)},
         communityImportCandidateKey(id,field,period=''){return [id,field,period].join('::')},
         communityImportCandidateFor(id,field){
@@ -5185,7 +5190,11 @@ createApp({
             const catalogName=COMMUNITY_FIELD_NAME_MAP[item.name] || item.name;
             const importCandidate=this.communityImportCandidateFor(this.activeItem?.id,catalogName);
             const governanceDecision=this.communityFactDecisions[this.communityFactDecisionKey(this.activeItem?.id,catalogName)] || null;
-            const imported=missing && importCandidate && this.communityImportHasValue(importCandidate.value);
+            const decisionHasValue=governanceDecision && this.communityImportHasValue(governanceDecision.value);
+            const baseHasValue=governanceDecision ? decisionHasValue : !missing;
+            const fallbackAllowed=this.communityDecisionAllowsImportFallback(governanceDecision);
+            const imported=!baseHasValue && fallbackAllowed && this.communityImportHasValue(importCandidate?.value);
+            const importFallbackAfterDecision=Boolean(imported && governanceDecision);
                 const productionPlanMap={
                     '挂牌均价（月）':'主小区市场行情生产',
                     '成交均价（周）':'小区成交行情统计',
@@ -5202,14 +5211,15 @@ createApp({
                 const historyMeta=String(item.sourceId)==='4120022661307956' ? (COMMUNITY_METRIC_HISTORY[item.name] || null) : null;
 	            return {
 	                ...item,
-	                value:governanceDecision ? governanceDecision.value : (imported ? importCandidate.value : (missing ? null : item.value)),
+	                value:decisionHasValue ? governanceDecision.value : (imported ? importCandidate.value : (governanceDecision || missing ? null : item.value)),
 	                rawValue:item.rawValue ?? (missing ? null : item.value),
 	                group,
-	                displayFormation:governanceDecision?.method || (imported ? '人工导入' : (productionPlan ? '生产方案' : '来源采用')),
+	                displayFormation:imported ? '人工导入' : (governanceDecision && (decisionHasValue || !fallbackAllowed) ? governanceDecision.method : (productionPlan ? '生产方案' : '来源采用')),
                 importCandidate,
 	                governanceDecision,
+	                importFallbackAfterDecision,
 	                productionPlan,
-	                noValueReason:missing ? (productionPlan?'无可用输入':'未形成当前值') : '',
+	                noValueReason:governanceDecision && !decisionHasValue ? (fallbackAllowed ? '字段裁决结果为空，且无可用人工导入数据' : '明确纠偏设空') : (missing ? (productionPlan?'无可用输入':'未形成当前值') : ''),
 	                updatedAt:governanceDecision?.time || (imported ? importCandidate.time : item.updatedAt),
 	                version:'',
 	                method:'',
@@ -5683,10 +5693,12 @@ createApp({
                 const catalogName=COMMUNITY_FIELD_NAME_MAP[label] || label;
                 const decision=this.communityFactDecisions[this.communityFactDecisionKey(this.activeComparisonTarget?.id,catalogName)];
                 const imported=this.communityImportCandidateFor(this.activeComparisonTarget?.id,catalogName);
-                const effectiveValue=mode==='init' ? '空值' : (decision ? decision.value : this.isMissingCommunityValue(currentValue) && imported ? imported.value : currentValue);
+                const baseValue=decision ? decision.value : currentValue;
+                const useImport=mode!=='init' && !this.communityImportHasValue(baseValue) && this.communityDecisionAllowsImportFallback(decision) && this.communityImportHasValue(imported?.value);
+                const effectiveValue=mode==='init' ? '空值' : (useImport ? imported.value : baseValue);
                 const currentEmpty = mode==='init' || this.isMissingCommunityValue(effectiveValue);
                 const fieldMeta=targetFields.find(item=>item.label===label);
-                const currentMethod=currentEmpty ? '无当前值' : decision?.method || (imported && String(imported.value)===String(effectiveValue) ? '人工导入' : fieldMeta?.method || fieldMeta?.formation || '来源采用');
+                const currentMethod=currentEmpty ? '无当前值' : (useImport ? '人工导入' : decision?.method || fieldMeta?.method || fieldMeta?.formation || '来源采用');
                 return {
                     name:this.communityFactDisplayName(label),
                     type:'普通事实字段',
@@ -5878,7 +5890,7 @@ createApp({
                     const fact=this.communityImportBaseFact(side.item.id,catalogName);
                     const imported=this.communityImportCandidateFor(side.item.id,catalogName);
                     const factValue=this.communityImportHasValue(fact.value) ? fact.value : null;
-                    const importedValue=!factValue && this.communityImportHasValue(imported?.value) ? imported.value : null;
+                    const importedValue=!factValue && this.communityDecisionAllowsImportFallback(fact.decision) && this.communityImportHasValue(imported?.value) ? imported.value : null;
                     field[side.prefix+'HasExplicitDecision']=Boolean(fact.decision);
                     if(importedValue){
                         field[side.prefix+'Value']=importedValue;
@@ -5886,7 +5898,8 @@ createApp({
                         field[side.prefix+'Method']='人工导入'
                     }else{
                         if(factValue) field[side.prefix+'Value']=factValue;
-                        field[side.prefix+'Method']=factValue ? fact.method : '来源采用'
+                        else if(fact.decision) field[side.prefix+'Value']='空值';
+                        field[side.prefix+'Method']=factValue || fact.decision ? fact.method : '来源采用'
                     }
                 }
                 if(!field.baseHasExplicitDecision && field.baseMethod==='人工导入' && field.sourceMethod==='来源采用' && this.communityImportHasValue(field.sourceValue)) field.choice='source';
@@ -5900,7 +5913,12 @@ createApp({
             this.mergeConfirmed=false
         },
         mergeFieldResult(field){
-            return field.choice==='source' ? `${field.sourceValue}（${field.sourceSource}）` : `${field.baseValue}（${field.baseSource}）`
+            const selectedValue=field.choice==='source' ? field.sourceValue : field.baseValue;
+            const selectedSource=field.choice==='source' ? field.sourceSource : field.baseSource;
+            if(this.communityImportHasValue(selectedValue)) return `${selectedValue}（${selectedSource}）`;
+            const catalogName=field.name==='标准小区名'?'小区名称':field.name;
+            const candidate=this.communityImportCandidateFor(this.mergeBaseCommunity?.id,catalogName);
+            return this.communityImportHasValue(candidate?.value) ? `${candidate.value}（人工导入兜底）` : '空值'
         },
         mergeFieldDecisionLabel(field){
             return field.choice==='source' ? `采用被合并值` : '保留基准值'
