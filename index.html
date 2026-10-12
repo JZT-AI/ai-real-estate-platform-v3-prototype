@@ -783,6 +783,15 @@
                                                 <div class="text-xs font-medium text-emerald-700">目标主小区</div>
                                                 <div class="mt-1 text-base font-semibold text-slate-900">{{ activeComparisonTarget?.title || '初始化新主小区预览' }}</div>
                                                 <div v-if="communityAttachTargetAliases" class="mt-1 text-xs text-slate-600">小区别名：{{ communityAttachTargetAliases }}</div>
+                                                <details v-if="communityAttachLinkedSources.length" class="mt-2 text-xs text-slate-600">
+                                                    <summary class="w-fit cursor-pointer select-none rounded px-1 py-0.5 hover:bg-emerald-100">
+                                                        已挂接来源：{{ communityAttachLinkedSources.length }} 个（{{ communityAttachLinkedSourceSummary }}）<span class="ml-1 text-blue-700">查看详情</span>
+                                                    </summary>
+                                                    <div class="mt-2 overflow-hidden rounded border border-emerald-200 bg-white">
+                                                        <div class="grid grid-cols-[110px_minmax(0,1fr)_150px] gap-2 border-b border-slate-200 bg-slate-50 px-3 py-2 font-medium text-slate-500"><span>来源</span><span>来源小区名称</span><span>来源小区 ID</span></div>
+                                                        <div v-for="source in communityAttachLinkedSources" :key="source.id" class="grid grid-cols-[110px_minmax(0,1fr)_150px] gap-2 border-b border-slate-100 px-3 py-2 last:border-b-0"><span>{{ source.source }}</span><span class="break-words">{{ source.name }}</span><span class="break-all font-mono text-[11px]">{{ source.id }}</span></div>
+                                                    </div>
+                                                </details>
                                             </div>
                                             <status-badge :text="communityAttachModeLabel"></status-badge>
                                         </div>
@@ -3574,9 +3583,9 @@ createApp({
             auditColumns:[{key:'time',label:'时间'},{key:'operator',label:'操作人'},{key:'target',label:'对象'},{key:'action',label:'操作类型',primary:true},{key:'result',label:'结果'}],
             sourceColumns:[{key:'id',label:'来源对象ID'},{key:'source',label:'来源'},{key:'name',label:'来源名称',primary:true},{key:'relation',label:'挂接关系',badge:true},{key:'updatedAt',label:'来源更新时间'}],
             communitySourceRelations:[
-                {id:'BK-NJ-88201',source:'贝壳',name:'溪语悦庭',relation:'已挂接',formation:'贝壳小区初始化',updatedAt:'2026-06-22 10:08'},
-                {id:'365-NJ-1201',source:'365',name:'溪语悦庭花园',relation:'已挂接',formation:'系统识别挂接',updatedAt:'2026-06-22 09:52'},
-                {id:'ERP-NJ-3308',source:'ERP',name:'溪语悦庭',relation:'已挂接',formation:'系统自动挂接',updatedAt:'2026-06-22 09:40'}
+                {id:'BK-NJ-88201',masterId:'MC-NJ-10294',source:'贝壳小区',name:'溪语悦庭',relation:'已挂接',formation:'贝壳小区初始化',updatedAt:'2026-06-22 10:08'},
+                {id:'365-NJ-1201',masterId:'MC-NJ-10294',source:'365小区',name:'溪语悦庭花园',relation:'已挂接',formation:'系统识别挂接',updatedAt:'2026-06-22 09:52'},
+                {id:'ERP-NJ-3308',masterId:'MC-NJ-10294',source:'ERP小区',name:'溪语悦庭',relation:'已挂接',formation:'系统自动挂接',updatedAt:'2026-06-22 09:40'}
             ],
             listingSourceRelations:[],
             communityCompare:[
@@ -4517,6 +4526,26 @@ createApp({
             if(this.communityAttachModeIsInit) return '';
             const value=this.communityAliasPreview(this.activeComparisonTarget?.fields || [],this.activeComparisonTarget?.title);
             return value==='—' ? '' : value;
+        },
+        communityAttachLinkedSources(){
+            const masterId=this.activeComparisonTarget?.id;
+            if(!masterId || this.communityAttachModeIsInit) return [];
+            const currentSourceId=String(this.activeItem?.object || '');
+            const seeded=(this.communitySourceRelations || [])
+                .filter(item=>item.masterId===masterId && item.relation==='已挂接')
+                .map(item=>({id:String(item.id),source:item.source,name:item.name}));
+            const collected=(this.accessCommunityData || [])
+                .filter(item=>item.recordType==='community' && String(item.masterCommunityId)===String(masterId))
+                .map(item=>({id:String(item.id),source:item.sourceName,name:item.communityName}));
+            const byId=new Map([...seeded,...collected].map(item=>[item.id,item]));
+            return [...byId.values()]
+                .filter(item=>item.id!==currentSourceId)
+                .sort((a,b)=>String(a.source).localeCompare(String(b.source),'zh-CN') || String(a.name).localeCompare(String(b.name),'zh-CN'));
+        },
+        communityAttachLinkedSourceSummary(){
+            const counts=new Map();
+            this.communityAttachLinkedSources.forEach(item=>counts.set(item.source,(counts.get(item.source)||0)+1));
+            return [...counts.entries()].map(([source,count])=>`${source} ${count}`).join(' · ');
         },
         communityAttachSourceAliases(){
             const value=this.activeItem?.sourceFields?.find(item=>item.label==='别名')?.value || '';
