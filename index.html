@@ -782,6 +782,7 @@
                                             <div>
                                                 <div class="text-xs font-medium text-emerald-700">目标主小区</div>
                                                 <div class="mt-1 text-base font-semibold text-slate-900">{{ activeComparisonTarget?.title || '初始化新主小区预览' }}</div>
+                                                <div v-if="communityAttachTargetAliases" class="mt-1 text-xs text-slate-600">小区别名：{{ communityAttachTargetAliases }}</div>
                                             </div>
                                             <status-badge :text="communityAttachModeLabel"></status-badge>
                                         </div>
@@ -789,6 +790,7 @@
                                     <div class="p-5 bg-sky-50">
                                         <div class="text-xs font-medium text-sky-700">来源小区</div>
                                         <div class="mt-1 text-base font-semibold text-slate-900">{{ activeItem.sourceCommunity }}</div>
+                                        <div v-if="communityAttachSourceAliases" class="mt-1 text-xs text-slate-600">小区别名：{{ communityAttachSourceAliases }}</div>
                                     </div>
                                 </div>
                                 <div v-if="visibleCommunityDecisionRows.length" class="overflow-visible">
@@ -815,19 +817,7 @@
                                                     <div class="rounded-lg px-3 py-2" :class="communityValueCellClass(row, 'source')">{{ row.sourceValue }}</div>
                                                 </td>
                                                 <td class="px-5 py-4 text-sm">
-                                                    <template v-if="row.impactRow?.type==='小区别名字段'">
-                                                        <div class="space-y-2 min-w-[260px]">
-                                                            <label v-for="alias in row.impactRow.aliasOptions" :key="alias.value + '-decision'" class="flex items-start gap-2 rounded-lg border px-3 py-2" :class="[row.impactRow.selectedAliases.includes(alias.value) ? 'border-blue-300 bg-blue-50' : 'border-slate-200 hover:bg-slate-50', isTaskReadonly ? 'cursor-not-allowed opacity-75' : 'cursor-pointer']">
-                                                                <input type="checkbox" :checked="row.impactRow.selectedAliases.includes(alias.value)" @change="toggleAliasSelection(row.impactRow, alias.value)" :disabled="isTaskReadonly" class="mt-1">
-                                                                <span>
-                                                                    <span class="block text-sm font-medium" :class="row.impactRow.selectedAliases.includes(alias.value) ? 'text-blue-800' : 'text-slate-800'">{{ alias.value }}</span>
-                                                                    <span class="block mt-1 text-xs text-slate-400">{{ alias.source }}</span>
-                                                                </span>
-                                                            </label>
-                                                            <div v-if="!row.impactRow.aliasOptions.length" class="text-slate-400">暂无可纳入别名</div>
-                                                        </div>
-                                                    </template>
-                                                    <template v-else-if="row.impactRow">
+                                                    <template v-if="row.impactRow">
                                                         <div class="space-y-2 min-w-[260px]">
                                                             <label v-for="option in communityImpactAdoptionOptions(row.impactRow)" :key="option.sourceId" class="flex items-start gap-2 rounded-lg border px-3 py-2" :class="[row.impactRow.selectedSourceId===option.sourceId ? 'border-blue-300 bg-blue-50' : 'border-slate-200 hover:bg-slate-50', isTaskReadonly ? 'cursor-not-allowed opacity-75' : 'cursor-pointer']">
                                                                 <input type="radio" :name="'community-impact-'+row.impactRow.name" :value="option.sourceId" v-model="row.impactRow.selectedSourceId" @change="selectCommunityImpactAdoption(row.impactRow, option)" :disabled="isTaskReadonly" class="mt-1">
@@ -965,17 +955,7 @@
                                                     </div>
                                                 </td>
                                                 <td class="px-5 py-4 text-sm">
-                                                    <template v-if="row.type==='小区别名字段'">
-                                                        <div class="space-y-2 min-w-[260px]">
-                                                            <label v-for="alias in row.aliasOptions" :key="alias.value + '-review'" class="flex items-start gap-2 rounded-lg border px-3 py-2" :class="[row.selectedAliases.includes(alias.value) ? 'border-blue-300 bg-blue-50' : 'border-slate-200 hover:bg-slate-50', isTaskReadonly ? 'cursor-not-allowed opacity-75' : 'cursor-pointer']">
-                                                                <input type="checkbox" :checked="row.selectedAliases.includes(alias.value)" @change="toggleAliasSelection(row, alias.value)" :disabled="isTaskReadonly" class="mt-1">
-                                                                <span>
-                                                                    <span class="block text-sm font-medium" :class="row.selectedAliases.includes(alias.value) ? 'text-blue-800' : 'text-slate-800'">{{ alias.value }}</span>
-                                                                </span>
-                                                            </label>
-                                                        </div>
-                                                    </template>
-                                                    <template v-else>
+                                                    <template>
                                                         <div class="space-y-2 min-w-[260px]">
                                                             <label v-for="option in fieldAdoptionOptions(row)" :key="option.sourceId" class="flex items-start gap-2 rounded-lg border px-3 py-2" :class="[row.selectedSourceId===option.sourceId ? 'border-blue-300 bg-blue-50' : 'border-slate-200 hover:bg-slate-50', isTaskReadonly ? 'cursor-not-allowed opacity-75' : 'cursor-pointer']">
                                                                 <input type="radio" :name="'field-adopt-'+row.name" :value="option.sourceId" v-model="row.selectedSourceId" @change="selectFieldAdoption(row, option)" :disabled="isTaskReadonly" class="mt-1">
@@ -1224,6 +1204,7 @@
                         <div>
                             <div class="text-sm text-slate-400">主小区手动合并</div>
                             <h2 class="mt-1 text-xl font-semibold text-slate-900">{{ mergeSourceCommunity.name }}</h2>
+                            <div v-if="communityAliasValues(mergeSourceCommunity).length" class="mt-1 text-sm text-slate-600">小区别名：{{ communityDisplayAliases(mergeSourceCommunity) }}</div>
                             <div class="mt-2 text-sm text-slate-500">当前主小区作为被合并对象发起，本次需选择保留的基准主小区。</div>
                         </div>
                         <span class="px-3 py-1 rounded-md bg-blue-50 border border-blue-200 text-sm font-medium text-blue-700">步骤 {{ mergeStep }} / 3</span>
@@ -1246,6 +1227,7 @@
                                 <div class="flex items-start justify-between gap-3">
                                     <div>
                                         <div class="text-sm font-semibold text-slate-900">{{ item.name }}</div>
+                                        <div v-if="communityAliasValues(item).length" class="mt-1 text-xs text-slate-600">小区别名：{{ communityDisplayAliases(item) }}</div>
                                         <div class="mt-1 text-xs text-slate-500">{{ item.id }} · {{ item.district }} · {{ item.block }}</div>
                                     </div>
                                     <span v-if="mergeBaseCommunity?.id===item.id" class="text-xs px-2 py-0.5 rounded border border-blue-200 bg-white text-blue-700">已选择</span>
@@ -1273,6 +1255,7 @@
                         <panel title="已选保留的基准主小区">
                             <div v-if="mergeBaseCommunity" class="p-5">
                                 <div class="text-lg font-semibold text-slate-900">{{ mergeBaseCommunity.name }}</div>
+                                <div v-if="communityAliasValues(mergeBaseCommunity).length" class="mt-1 text-sm text-slate-600">小区别名：{{ communityDisplayAliases(mergeBaseCommunity) }}</div>
                                 <div class="mt-1 text-sm text-slate-500">{{ mergeBaseCommunity.id }} · {{ mergeBaseCommunity.district }} · {{ mergeBaseCommunity.block }}</div>
                                 <div class="mt-5 grid grid-cols-3 gap-3">
                                     <mini-stat label="来源小区" :value="String(mergeBaseCommunity.sourceCount)"></mini-stat>
@@ -1291,10 +1274,10 @@
                 <div v-else-if="mergeStep===2" class="space-y-4">
                     <div class="grid grid-cols-2 gap-4">
                         <panel title="被合并主小区">
-                            <div class="p-5"><div class="text-lg font-semibold text-slate-900">{{ mergeSourceCommunity.name }}</div><div class="mt-1 text-sm text-slate-500">{{ mergeSourceCommunity.id }} · {{ mergeSourceCommunity.sourceCount }} 个来源小区</div></div>
+                            <div class="p-5"><div class="text-lg font-semibold text-slate-900">{{ mergeSourceCommunity.name }}</div><div v-if="communityAliasValues(mergeSourceCommunity).length" class="mt-1 text-sm text-slate-600">小区别名：{{ communityDisplayAliases(mergeSourceCommunity) }}</div><div class="mt-1 text-sm text-slate-500">{{ mergeSourceCommunity.id }} · {{ mergeSourceCommunity.sourceCount }} 个来源小区</div></div>
                         </panel>
                         <panel title="保留的基准主小区">
-                            <div class="p-5"><div class="text-lg font-semibold text-slate-900">{{ mergeBaseCommunity.name }}</div><div class="mt-1 text-sm text-slate-500">{{ mergeBaseCommunity.id }} · {{ mergeBaseCommunity.sourceCount }} 个来源小区</div></div>
+                            <div class="p-5"><div class="text-lg font-semibold text-slate-900">{{ mergeBaseCommunity.name }}</div><div v-if="communityAliasValues(mergeBaseCommunity).length" class="mt-1 text-sm text-slate-600">小区别名：{{ communityDisplayAliases(mergeBaseCommunity) }}</div><div class="mt-1 text-sm text-slate-500">{{ mergeBaseCommunity.id }} · {{ mergeBaseCommunity.sourceCount }} 个来源小区</div></div>
                         </panel>
                     </div>
                     <panel title="事实字段采用">
@@ -1306,19 +1289,10 @@
                                     <tr v-for="field in mergeFieldRows" :key="field.name">
                                         <td class="px-5 py-4 text-sm font-medium text-slate-900">{{ field.name }}</td>
                                         <td class="px-5 py-4 text-sm text-slate-600">{{ field.type }}</td>
-                                        <td class="px-5 py-4 text-sm"><div class="flex flex-wrap items-center gap-2"><span :class="field.type!=='小区别名字段' && field.choice==='base' ? 'inline-flex rounded bg-violet-100 px-1.5 py-0.5 font-semibold text-violet-700' : 'text-slate-800'">{{ field.baseValue }}</span><span v-if="field.type!=='小区别名字段'" class="rounded-full border px-2 py-0.5 text-[11px] font-medium" :class="communityFactMethodBadgeClass(field.baseMethod)">{{ field.baseMethod }}</span></div><div class="mt-1 text-xs text-slate-400">{{ field.baseSource }}</div></td>
-                                        <td class="px-5 py-4 text-sm"><div class="flex flex-wrap items-center gap-2"><span :class="field.type!=='小区别名字段' && field.choice==='source' ? 'inline-flex rounded bg-violet-100 px-1.5 py-0.5 font-semibold text-violet-700' : 'text-slate-800'">{{ field.sourceValue }}</span><span v-if="field.type!=='小区别名字段'" class="rounded-full border px-2 py-0.5 text-[11px] font-medium" :class="communityFactMethodBadgeClass(field.sourceMethod)">{{ field.sourceMethod }}</span></div><div class="mt-1 text-xs text-slate-400">{{ field.sourceSource }}</div></td>
+                                        <td class="px-5 py-4 text-sm"><div class="flex flex-wrap items-center gap-2"><span :class="field.choice==='base' ? 'inline-flex rounded bg-violet-100 px-1.5 py-0.5 font-semibold text-violet-700' : 'text-slate-800'">{{ field.baseValue }}</span><span class="rounded-full border px-2 py-0.5 text-[11px] font-medium" :class="communityFactMethodBadgeClass(field.baseMethod)">{{ field.baseMethod }}</span></div><div class="mt-1 text-xs text-slate-400">{{ field.baseSource }}</div></td>
+                                        <td class="px-5 py-4 text-sm"><div class="flex flex-wrap items-center gap-2"><span :class="field.choice==='source' ? 'inline-flex rounded bg-violet-100 px-1.5 py-0.5 font-semibold text-violet-700' : 'text-slate-800'">{{ field.sourceValue }}</span><span class="rounded-full border px-2 py-0.5 text-[11px] font-medium" :class="communityFactMethodBadgeClass(field.sourceMethod)">{{ field.sourceMethod }}</span></div><div class="mt-1 text-xs text-slate-400">{{ field.sourceSource }}</div></td>
                                         <td class="px-5 py-4 text-sm min-w-[260px]">
-                                            <div v-if="field.type==='小区别名字段'" class="space-y-2">
-                                                <label v-for="alias in field.aliasOptions" :key="alias.value + '-merge'" class="flex items-start gap-2 rounded-lg border px-3 py-2 cursor-pointer" :class="field.selectedAliases.includes(alias.value) ? 'border-blue-300 bg-blue-50' : 'border-slate-200 hover:bg-slate-50'">
-                                                    <input type="checkbox" :checked="field.selectedAliases.includes(alias.value)" @change="toggleAliasSelection(field, alias.value)" class="mt-1">
-                                                    <span>
-                                                        <span class="block text-sm font-medium" :class="field.selectedAliases.includes(alias.value) ? 'text-blue-800' : 'text-slate-800'">{{ alias.value }}</span>
-                                                        <span class="block mt-1 text-xs text-slate-400">{{ alias.source }}</span>
-                                                    </span>
-                                                </label>
-                                            </div>
-                                            <div v-else class="flex flex-col gap-2">
+                                            <div class="flex flex-col gap-2">
                                                 <label class="flex items-center gap-2 cursor-pointer"><input type="radio" :name="'merge-'+field.name" value="base" v-model="field.choice"><span>保留基准主小区事实值</span></label>
                                                 <label class="flex items-center gap-2 cursor-pointer"><input type="radio" :name="'merge-'+field.name" value="source" v-model="field.choice"><span>采用被合并主小区事实值</span></label>
                                             </div>
@@ -1348,9 +1322,9 @@
                             <div class="divide-y divide-slate-200">
                                 <div v-for="field in mergeFieldRows" :key="field.name" class="px-5 py-4 grid grid-cols-[140px_160px_1fr_180px] gap-4 text-sm items-start">
                                     <div class="font-medium text-slate-900">{{ field.name }}</div>
-                                    <div><span :class="field.type==='小区别名字段' ? 'border-violet-200 bg-violet-50 text-violet-700' : (field.choice==='source' ? 'border-amber-200 bg-amber-50 text-amber-800' : 'border-blue-200 bg-blue-50 text-blue-700')" class="inline-flex rounded border px-2 py-1 text-xs font-medium">{{ mergeFieldDecisionLabel(field) }}</span></div>
+                                    <div><span :class="field.choice==='source' ? 'border-amber-200 bg-amber-50 text-amber-800' : 'border-blue-200 bg-blue-50 text-blue-700'" class="inline-flex rounded border px-2 py-1 text-xs font-medium">{{ mergeFieldDecisionLabel(field) }}</span></div>
                                     <div class="break-words text-slate-800">{{ mergeFieldResult(field) }}</div>
-                                    <div class="text-slate-500">{{ field.type==='小区别名字段' ? '别名多选纳入' : (field.choice==='source' ? '采用被合并方事实值' : '保留基准方事实值') }}</div>
+                                    <div class="text-slate-500">{{ field.choice==='source' ? '采用被合并方事实值' : '保留基准方事实值' }}</div>
                                 </div>
                             </div>
                         </panel>
@@ -2919,8 +2893,8 @@ const alignHouseFieldsToCatalog = (fact) => {
 REAL_STANDARD_FACTS.forEach(alignHouseFieldsToCatalog);
 
 const REAL_COMMUNITIES = [
-    {id:'MC-BK-4120022661307956',name:'观山名筑北区',city:'无锡市',district:'滨湖区',block:'塘铁桥',sourceCount:2,relation:'已挂接',risk:'无风险',fieldStatus:'正常',reviewStatus:'来源初始化',confidence:'100',dataUpdatedAt:'2026-07-09 01:02',lastGovernedAt:''},
-    {id:'MC-WX-OBS-0001',name:'观山名筑北区（旧档）',city:'无锡市',district:'滨湖区',block:'塘铁桥',sourceCount:2,relation:'已挂接',risk:'需核对',fieldStatus:'存在差异',reviewStatus:'待治理',confidence:'92',dataUpdatedAt:'2026-07-08 23:16',lastGovernedAt:'',mergeHint:'名称高度相似 · 同板块 · 坐标误差 18 米',mergeDemo:true},
+    {id:'MC-BK-4120022661307956',name:'观山名筑北区',alias:'观山名筑',city:'无锡市',district:'滨湖区',block:'塘铁桥',sourceCount:2,relation:'已挂接',risk:'无风险',fieldStatus:'正常',reviewStatus:'来源初始化',confidence:'100',dataUpdatedAt:'2026-07-09 01:02',lastGovernedAt:''},
+    {id:'MC-WX-OBS-0001',name:'观山名筑北区（旧档）',alias:'观山名筑北区',city:'无锡市',district:'滨湖区',block:'塘铁桥',sourceCount:2,relation:'已挂接',risk:'需核对',fieldStatus:'存在差异',reviewStatus:'待治理',confidence:'92',dataUpdatedAt:'2026-07-08 23:16',lastGovernedAt:'',mergeHint:'名称高度相似 · 同板块 · 坐标误差 18 米',mergeDemo:true},
     {id:'MC-ROUND-149912',name:'风南园',city:'南京市',district:'江北新区',block:'葛塘大厂',sourceCount:1,relation:'已挂接',risk:'无风险',fieldStatus:'正常',reviewStatus:'来源初始化',confidence:'100',dataUpdatedAt:'--',lastGovernedAt:''},
     {id:'MC-MARKET-147001',name:'十全小区',city:'苏州市',district:'姑苏区',block:'十全街',sourceCount:1,relation:'已挂接',risk:'无风险',fieldStatus:'正常',reviewStatus:'来源初始化',confidence:'100',dataUpdatedAt:'--',lastGovernedAt:''}
 ];
@@ -3578,11 +3552,10 @@ createApp({
                     {id:'MC-NJ-10701',title:'金域华府南苑',recommended:false,confidence:'低置信',meta:'栖霞区 / 仙林',summary:'名称相近但区域距离较远。',conflict:'行政区与距离冲突',sourceCount:1,fields:[{label:'小区名称',value:'金域华府南苑'},{label:'别名',value:'金域南苑'},{label:'地址',value:'仙林大道18号'},{label:'行政区',value:'栖霞区'},{label:'板块',value:'仙林'},{label:'经纬度',value:'118.9362, 32.1045'},{label:'物业类型',value:'住宅'},{label:'建筑类型',value:'板塔结合'},{label:'楼栋数',value:'8栋'},{label:'总户数',value:'760户'},{label:'建成年份',value:'2013年'},{label:'开发商',value:'仙林置业'},{label:'物业公司',value:'银城物业'}],evidences:[{label:'名称/别名',value:'名称局部相似'},{label:'地址',value:'道路不同'},{label:'行政区',value:'行政区不一致'},{label:'物业建筑',value:'建筑类型接近'},{label:'开发商物业',value:'开发商不同'},{label:'关联房源',value:'无集中关系'}]}
                 ]},
                 {id:'TASK-C-A105',title:'溪语悦庭花园来源小区纠正挂接审核',type:'来源小区挂接审核',object:'365-NJ-1201',masterIds:['MC-NJ-10294'],confidence:'人工审核',taskSource:'人工发起纠正挂接',processingType:'纠正挂接',reviewReason:'人工发起纠正挂接',relation:'已挂接',status:'待处理',owner:'李思源',source:'365小区',automation:'人工发起纠正挂接',sourceCommunity:'溪语悦庭花园',sourceUpdatedAt:'2026-06-22 09:52',currentMaster:'溪语悦庭',candidateMaster:'溪语悦庭',impact:'来源小区1 / 主小区1',reason:'运营在主小区详情发现该来源小区归属需要审核，需确认是否继续归属当前主小区。',summary:'该任务由主小区详情来源关系人工发起，系统重新识别候选和依据后进入审核，不直接修改挂接关系。',remark:'请核对来源名称、地址、别名和定位后确认最终归属。',candidateScope:'当前主小区及同城市可选主小区',filterResult:'人工发起：已重新识别候选和依据，不执行自动处理，仅进入审核任务',manualCorrection:{entry:'主小区详情 > 来源关系 > 纠正挂接',startedFromMaster:'溪语悦庭（MC-NJ-10294）',originalMaster:'溪语悦庭（MC-NJ-10294）',reason:'365 来源维护为“溪语悦庭花园”，需审核是否应继续归属“溪语悦庭”。'},sourceFields:[{label:'小区名称',value:'溪语悦庭花园'},{label:'别名',value:'溪语悦庭苑'},{label:'地址',value:'应天大街888号'},{label:'行政区',value:'建邺区'},{label:'板块',value:'河西中'},{label:'经纬度',value:'118.7310, 32.0138'},{label:'物业类型',value:'普通住宅'},{label:'建筑类型',value:'板楼'},{label:'楼栋数',value:'10栋'},{label:'总户数',value:'960户'},{label:'建成年份',value:'2016年'},{label:'开发商',value:'南京溪庭置业'},{label:'物业公司',value:'溪庭物业'}],candidates:[
-                    {id:'MC-NJ-10294',title:'溪语悦庭',recommended:true,confidence:'人工审核',meta:'建邺区 / 河西中',summary:'当前已挂接主小区，人工发起后需审核是否保持归属。',conflict:'人工发起纠正挂接',sourceCount:2,fields:[{label:'小区名称',value:'溪语悦庭'},{label:'别名',value:'溪语悦庭花园'},{label:'地址',value:'江东中路与应天大街交叉口'},{label:'行政区',value:'建邺区'},{label:'板块',value:'河西中'},{label:'经纬度',value:'118.7309, 32.0139'},{label:'物业类型',value:'住宅'},{label:'建筑类型',value:'板楼'},{label:'楼栋数',value:'10栋'},{label:'总户数',value:'960户'},{label:'建成年份',value:'2016年'},{label:'开发商',value:'南京溪庭置业'},{label:'物业公司',value:'溪庭物业'}],evidences:[{label:'发起入口',value:'主小区详情来源关系'},{label:'当前关系',value:'来源小区当前已挂接溪语悦庭'},{label:'名称/别名',value:'来源名称可作为主小区别名纳入'},{label:'地址与位置',value:'地址存在表达差异，需要审核'}]}
+                    {id:'MC-NJ-10294',title:'溪语悦庭',recommended:true,confidence:'人工审核',meta:'建邺区 / 河西中',summary:'当前已挂接主小区，人工发起后需审核是否保持归属。',conflict:'人工发起纠正挂接',sourceCount:2,fields:[{label:'小区名称',value:'溪语悦庭'},{label:'别名',value:'溪语悦庭花园'},{label:'地址',value:'江东中路与应天大街交叉口'},{label:'行政区',value:'建邺区'},{label:'板块',value:'河西中'},{label:'经纬度',value:'118.7309, 32.0139'},{label:'物业类型',value:'住宅'},{label:'建筑类型',value:'板楼'},{label:'楼栋数',value:'10栋'},{label:'总户数',value:'960户'},{label:'建成年份',value:'2016年'},{label:'开发商',value:'--'},{label:'物业公司',value:'溪庭物业'}],evidences:[{label:'发起入口',value:'主小区详情来源关系'},{label:'当前关系',value:'来源小区当前已挂接溪语悦庭'},{label:'名称/别名',value:'来源名称可作为主小区别名纳入'},{label:'地址与位置',value:'地址存在表达差异，需要审核'}]}
                 ]},
-	                {id:'TASK-C-F301',title:'溪语悦庭物业类型字段差异审核',type:'主小区字段差异审核',object:'MC-NJ-10294',masterIds:['MC-NJ-10294'],confidence:'中置信',processingType:'字段差异审核',relation:'已挂接',status:'待处理',owner:'周清越',source:'贝壳小区 / 365小区 / ERP小区',automation:'生成复核任务',impact:'主小区字段5 / 来源小区3',reason:'物业类型来源值不一致，且字段均非空、格式正确、来源已挂接',summary:'本次多来源小区更新触发主小区 5 个字段差异，部分字段存在多个来源候选值，需要一次性完成字段裁决。',remark:'请确认本次字段裁决结果。',sourceCountInTask:3,fieldRows:[
+	                {id:'TASK-C-F301',title:'溪语悦庭物业类型字段差异审核',type:'主小区字段差异审核',object:'MC-NJ-10294',masterIds:['MC-NJ-10294'],confidence:'中置信',processingType:'字段差异审核',relation:'已挂接',status:'待处理',owner:'周清越',source:'贝壳小区 / 365小区 / ERP小区',automation:'生成复核任务',impact:'主小区字段4 / 来源小区3',reason:'物业类型来源值不一致，且字段均非空、格式正确、来源已挂接',summary:'本次多来源小区更新触发主小区 4 个字段差异，部分字段存在多个来源候选值，需要一次性完成字段裁决。',remark:'请确认本次字段裁决结果。',sourceCountInTask:3,fieldRows:[
 	                    {name:'物业类型',current:'住宅',candidate:'普通住宅、公寓住宅',source:'365小区 / ERP小区',updatedAt:'2026-06-22 09:52',reason:'来源值非空、格式正确，且与当前主值存在差异',decision:'',selectedSourceId:'',selectedSourceLabel:'',sourceOptions:[{sourceId:'BK-NJ-88201',source:'贝壳小区',value:'住宅',updatedAt:'2026-06-22 10:08',checks:['非空','来源已挂接','当前采用']},{sourceId:'365-NJ-1201',source:'365小区',value:'普通住宅',updatedAt:'2026-06-22 09:52',checks:['非空','来源已挂接','格式正确']},{sourceId:'ERP-NJ-3308',source:'ERP小区',value:'公寓住宅',updatedAt:'2026-06-22 09:40',checks:['非空','来源已挂接','格式正确']}]},
-	                    {name:'小区别名',type:'小区别名字段',current:'溪语悦庭、溪语悦庭花园',candidate:'溪语悦庭花园、溪语悦庭苑',source:'365小区',updatedAt:'2026-06-22 09:52',reason:'来源名称和别名更新后并入主小区别名集合，需要确认最终纳入内容',selectedAliases:['溪语悦庭花园'],aliasOptions:[{value:'溪语悦庭花园',source:'365小区名称'},{value:'溪语悦庭苑',source:'365小区别名'}]},
 	                    {name:'小区地址',current:'江东中路与应天大街交叉口',candidate:'应天大街888号、江东中路应天大街口',source:'365小区 / ERP小区',updatedAt:'2026-06-22 09:52',reason:'地址格式可识别，但与当前主值存在差异',decision:'',selectedSourceId:'',selectedSourceLabel:'',sourceOptions:[{sourceId:'BK-NJ-88201',source:'贝壳小区',value:'江东中路与应天大街交叉口',updatedAt:'2026-06-22 10:08',checks:['非空','来源已挂接','当前采用']},{sourceId:'365-NJ-1201',source:'365小区',value:'应天大街888号',updatedAt:'2026-06-22 09:52',checks:['非空','来源已挂接','地址差异']},{sourceId:'ERP-NJ-3308',source:'ERP小区',value:'江东中路应天大街口',updatedAt:'2026-06-22 09:40',checks:['非空','来源已挂接','地址差异']}]},
 	                    {name:'开发商',current:'-',candidate:'南京溪庭置业',source:'365小区',updatedAt:'2026-06-22 09:52',reason:'当前字段缺失，来源值新增且可识别',decision:'',selectedSourceId:'',selectedSourceLabel:'',sourceOptions:[{sourceId:'365-NJ-1201',source:'365小区',value:'南京溪庭置业',updatedAt:'2026-06-22 09:52',checks:['非空','来源已挂接','格式正确']} ]},
 	                    {name:'挂牌均价',current:'5.2万/㎡',candidate:'5.05万/㎡、5.18万/㎡',source:'365小区 / ERP小区',updatedAt:'2026-06-22 09:52',reason:'行情字段更新后与当前主值存在差异',decision:'',selectedSourceId:'',selectedSourceLabel:'',sourceOptions:[{sourceId:'BK-NJ-88201',source:'贝壳小区',value:'5.2万/㎡',updatedAt:'2026-06-22 10:20',checks:['非空','当前采用']},{sourceId:'365-NJ-1201',source:'365小区',value:'5.05万/㎡',updatedAt:'2026-06-22 09:52',checks:['非空','来源已挂接']},{sourceId:'ERP-NJ-3308',source:'ERP小区',value:'5.18万/㎡',updatedAt:'2026-06-22 09:40',checks:['非空','来源已挂接']}]}
@@ -3617,7 +3590,6 @@ createApp({
                 {source:'系统判断',confidence:'需人工复核',fields:[{label:'触发',value:'字段关键冲突或锁定来源异常'},{label:'写入',value:'字段采用关系'},{label:'限制',value:'不纯手填主对象'},{label:'治理记录',value:'记录来源字段和任务结论'}]}
             ],
             impactFields:[
-                {name:'小区别名',current:'-',candidate:'溪语悦庭花园',source:'365小区',suggestion:'别名汇总',selected:true},
                 {name:'物业类型',current:'住宅',candidate:'普通住宅',source:'365小区',suggestion:'生成复核',selected:false},
                 {name:'建筑面积',current:'95.2㎡',candidate:'94.8㎡',source:'自营房源',suggestion:'人工已裁决',selected:false},
                 {name:'挂牌总价',current:'386万',candidate:'456万',source:'好好选房房源',suggestion:'生成复核',selected:false},
@@ -3666,8 +3638,8 @@ createApp({
             ],
             fieldAdoptionRules:[
                 {objectType:'主小区',fieldType:'市场与行情字段',fields:'字段分类清单中“市场与行情”分组的全部字段，例如参考均价、在售套数、在租套数、看房量等；最终以字段分类清单为准',defaultOrder:'存在有效挂接贝壳来源时采用贝壳字段值，空值或无效值也不回退；不存在贝壳来源时采用其他来源更新时间最近的有效非空值',difference:'字段差异仅保留来源事实，不生成字段差异审核任务，也不并入已有任务',manual:'不进入来源小区挂接审核的字段裁决；不允许任务内人工改选采用来源',version:'V1.2',updatedAt:'2026-08-12 14:30'},
-                {objectType:'主小区',fieldType:'普通事实字段',fields:'名称、行政区、板块、地址、物业类型、开发商、物业公司、楼栋数等',defaultOrder:'人工指定来源 > 贝壳非空值 > 其他来源更新时间最近的非空值',difference:'普通差异保留对比；关键冲突按主小区维度生成或更新字段差异审核任务',manual:'持续跟随指定来源；指定来源为空时保留最近事实值并生成审核任务',version:'V1.3',updatedAt:'2026-06-25 16:20'},
-                {objectType:'主小区',fieldType:'小区别名字段',fields:'小区别名',defaultOrder:'汇总全部已挂接来源的小区名称和小区别名，剔除与主小区标准名称完全相同的名称后，标准化去重',difference:'来源新增别名或名称变更时并入主小区字段差异审核任务',manual:'运营可多选纳入或取消纳入具体别名',version:'V1.3',updatedAt:'2026-06-25 16:20'},
+                {objectType:'主小区',fieldType:'普通事实字段',fields:'名称、行政区、板块、地址、物业类型、开发商、物业公司、楼栋数等',defaultOrder:'人工指定来源 > 贝壳非空值 > 其他来源更新时间最近的非空值',difference:'普通差异保留对比；关键冲突按主小区维度生成或更新字段差异审核任务；来源小区名称更新本身不生成任务',manual:'持续跟随指定来源；指定来源为空时保留最近事实值并生成审核任务',version:'V3.0',updatedAt:'2026-10-12'},
+                {objectType:'主小区',fieldType:'小区别名字段',fields:'小区别名',defaultOrder:'汇总当前全部有效挂接来源的小区名称和别名，剔除主小区标准名称后标准化去重',difference:'来源小区名称或别名更新时自动重算，不生成或追加主小区字段差异审核任务',manual:'挂接与合并页在小区名称下方只读展示，不作为字段裁决项',version:'V3.0',updatedAt:'2026-10-12'},
                 
                 
             ],
@@ -3747,6 +3719,7 @@ createApp({
                 {id:'BUILDYEAR-EXT-1.0',option:'BUILDYEAR-EXT-1.0 建成年代生产',name:'建成年代生产',assetCategory:'数据加工',targetObject:'房源',targetResult:'建成年代',field:'建成年代',inputs:'来源房源建成年代、来源房源所属来源小区建成年代',version:'V1.1',sources:'全部来源',status:'启用',feedbackMode:'无',needsLearning:false,summary:'清洗来源建成年代；来源房源未提供时，使用其所属来源小区建成年代补充。',rule:'来源房源建成年代有值时只清洗该值；为空时再清洗其所属来源小区建成年代。提取 1900 年至计算年份之间的唯一四位年份；房源值非空但清洗失败或冲突时不回退来源小区，也不使用主小区、标题或描述。'},
                 {id:'HOUSE-FEATURE-EXT-1.0',option:'HOUSE-FEATURE-EXT-1.0 户型特点加工',name:'户型特点加工',assetCategory:'数据加工',targetObject:'房源',targetResult:'户型特点',field:'户型特点',inputs:'房源标题、描述、房源特色与来源房源图片',version:'V1.0',sources:'全部来源',status:'启用',feedbackMode:'字段纠偏',needsLearning:true,summary:'识别全明格局、全南户型、南北通透等固定户型特点。',rule:'逐项识别明确文本或合格来源图片中的固定户型特点并保留依据；营销泛词不进入事实，证据不足时输出为空。'},
                 {id:'RECENT-DEAL-1.0',option:'RECENT-DEAL-1.0 最近成交明细生产',name:'最近成交明细生产',assetCategory:'数据加工',targetObject:'主小区',targetResult:'最近 0 至 10 条有效成交明细',field:'最近成交明细',inputs:'来源成交记录、来源小区、已确认主小区关系',version:'V1.0',sources:'成交数据源',status:'启用',feedbackMode:'无',needsLearning:false,summary:'按主小区名称或已挂接来源小区名称精确匹配归属成交，去重后按日期倒序形成最近成交明细。',rule:'主小区名称和已挂接来源小区名称作为成交归属候选；仅名称完全匹配的成交可归属，能归属多个主小区时不进入结果。统一字段格式后按来源及来源成交 ID 去重，按成交日期倒序取最近 0 至 10 条；不足 10 条时按实际数量输出。'},
+                {id:'DATA-COMMUNITY-ALIAS',option:'主小区别名生产',name:'主小区别名生产',assetCategory:'数据加工',targetObject:'主小区',targetResult:'小区别名文本、结构化别名列表',field:'小区别名',inputs:'当前有效挂接来源小区的小区名称、小区别名；主小区当前标准名称',version:'V3.0',sources:'全部来源小区',status:'启用',updatedAt:'2026-10-12 10:00',feedbackMode:'无',needsLearning:false,summary:'自动汇总当前主小区下全部有效挂接来源的名称和别名，剔除主小区标准名称并去重。',rule:'读取当前全部有效挂接来源的小区名称和小区别名，拆分、标准化、去空、去重，并剔除与主小区当前标准名称相同的名称。按稳定顺序形成小区别名文本和结构化列表；不读取别名集合的纳入状态，也不允许在挂接或合并审核中取消纳入。',noResult:'没有符合条件的来源名称或别名时，生产结果为空。'},
                 {id:'DATA-COMMUNITY-LAYOUT',option:'主小区户型聚合',name:'主小区户型聚合',assetCategory:'数据加工',targetObject:'主小区户型',targetResult:'户室结构、标称建筑面积、朝向、户型图、贝壳户型采集挂牌总价区间（万元）、当前在售房源数、房源面积区间、平台挂牌总价区间（万元）',field:'主小区户型',inputs:'有效贝壳来源小区、贝壳来源户型、户型图、来源挂牌总价区间、贝壳房源及对象关系',version:'V1.0',sources:'贝壳小区、贝壳房源',status:'启用',feedbackMode:'无',needsLearning:false,summary:'按具体贝壳来源户型和户型图形成主小区户型，并展示采集价格与关联房源计算价格。',rule:'相同来源户型标识或完全一致户型图片去重；图片不同形成不同户型。贝壳户型采集挂牌总价区间直接保留；平台挂牌总价区间只统计挂牌状态为上架且关系有效的贝壳房源。两个区间并列展示，不生成对比结果。'},
             ],
             qualityFilters:{assetCategory:'全部',keyword:'',targetObject:'全部',source:'全部',status:'全部',suggestion:'全部'},
@@ -3804,7 +3777,7 @@ createApp({
             communityImportFileName:'',communityImportPreviewCity:'',communityImportPreviewRows:[],
             communityImportPreviewSignature:'',communityImportActiveRecordId:'',
             communityImportRecords:[{id:'IMP-DEMO-001',city:'南京市',fileName:'南京市-历史小区补充.xlsx',time:'2026-10-08 10:20',operator:'张明',totalCommunities:1,validCommunities:1,skippedCommunities:0,operations:3,errorCommunities:0,details:[{communityId:'MC-NJ-10294',communityName:'溪语悦庭',status:'可导入',fullReason:'校验通过',fields:[{field:'开发商',type:'update',value:'南京溪庭置业有限公司'},{field:'看房量（月）',type:'update',value:'18次（26年09月数据）'},{field:'物业类型',type:'update',value:'普通住宅'}]}]}],
-            communityImportCandidates:{'MC-NJ-10294::开发商::':{value:'南京溪庭置业有限公司',batchId:'IMP-DEMO-001',time:'2026-10-08 10:20',operator:'张明'},'MC-NJ-10294::看房量（月）::':{value:'18次（26年09月数据）',batchId:'IMP-DEMO-001',time:'2026-10-08 10:20',operator:'张明'},'MC-NJ-10294::物业类型::':{value:'普通住宅',batchId:'IMP-DEMO-001',time:'2026-10-08 10:20',operator:'张明'}},
+            communityImportCandidates:{'MC-NJ-10294::开发商::':{value:'南京溪庭置业有限公司',batchId:'IMP-DEMO-001',time:'2026-10-08 10:20',operator:'张明'},'MC-NJ-10294::看房量（月）::':{value:'18次（26年09月数据）',batchId:'IMP-DEMO-001',time:'2026-10-08 10:20',operator:'张明'},'MC-NJ-10294::物业类型::':{value:'普通住宅',batchId:'IMP-DEMO-001',time:'2026-10-08 10:20',operator:'张明'},'MC-WX-OBS-0001::开发商::':{value:'无锡兴想房产',batchId:'IMP-MERGE-DEMO-001',time:'2026-10-12 10:20',operator:'张明'}},
             communityFactDecisions:{},communityImportLastResult:null,
             toastText:''
         }
@@ -3970,6 +3943,7 @@ createApp({
                 'BUILDYEAR-EXT-1.0':'来源房源建成年代新增或变化；来源房源建成年代为空时，其所属来源小区建成年代新增或变化。',
 		                'HOUSE-FEATURE-EXT-1.0':'房源标题、描述、房源特色或来源图片新增、变化，或方案版本明确纳入重跑。',
 		                'RECENT-DEAL-1.0':'关联成交记录或已确认主小区关系新增、变化。',
+                'DATA-COMMUNITY-ALIAS':'来源小区名称或别名、有效挂接关系、主小区标准名称新增或变化；主小区合并后重算受影响主小区。',
                 'DATA-HOUSE-LISTING-STATUS':'来源平台、来源对象－房源－记录状态或来源对象－房源－最近更新时间变化；贝壳上架和疑似下架每日检测。',
                 'DATA-COMMUNITY-LAYOUT':'贝壳来源户型、户型图、关联房源属性或主小区及户型关系新增、变化。'
 	            };
@@ -3980,6 +3954,7 @@ createApp({
                 'BUILDYEAR-EXT-1.0':'先清洗来源房源建成年代；仅当该值为空时，再清洗其所属来源小区建成年代。提取 1900 年至计算年份之间的唯一四位年份；房源值非空但无效或冲突时不回退，也不使用主小区、标题或描述。',
 		                'HOUSE-FEATURE-EXT-1.0':'逐项识别明确文本或合格来源图片中的全明格局、全南户型、南北通透、带院子和带露台等固定标签，并保留对应依据；营销泛词不作为户型事实。',
 	                'RECENT-DEAL-1.0':'以主小区名称和已挂接来源小区名称作为归属候选，仅名称完全匹配的成交可进入结果；去重后按成交日期倒序取最近 0 至 10 条。',
+                'DATA-COMMUNITY-ALIAS':'汇总当前主小区下全部有效挂接来源的小区名称和别名；剔除主小区当前标准名称，按既有口径标准化、去重并稳定排序。审核页只在小区名称下方展示别名，不提供纳入裁决。',
 		                'DATA-HOUSE-LISTING-STATUS':'非贝壳来源直接采用来源对象－房源－记录状态；贝壳来源记录为下架时输出下架，记录为上架时按最近更新时间与每日任务执行日期的自然日差值判断上架或疑似下架。',
                 'DATA-COMMUNITY-LAYOUT':'相同来源户型标识或完全一致户型图片去重形成具体户型；只关联符合方案条件的贝壳房源，再过滤挂牌状态不为上架、关系失效和价格非法的房源后计算当前挂牌指标。'
 	            };
@@ -4538,6 +4513,15 @@ createApp({
             }
             return this.selectedTaskCandidate;
         },
+        communityAttachTargetAliases(){
+            if(this.communityAttachModeIsInit) return '';
+            const value=this.communityAliasPreview(this.activeComparisonTarget?.fields || [],this.activeComparisonTarget?.title);
+            return value==='—' ? '' : value;
+        },
+        communityAttachSourceAliases(){
+            const value=this.activeItem?.sourceFields?.find(item=>item.label==='别名')?.value || '';
+            return ['—','--','-'].includes(value) ? '' : value;
+        },
         initCommunityPreviewTarget(){
             if(!this.isCommunityAttachTask) return null;
             return {
@@ -4583,7 +4567,6 @@ createApp({
                 const keys=[row.name,row.compareLabel];
                 if(row.name==='标准小区名') keys.push('小区名称');
                 if(row.name==='小区地址') keys.push('地址');
-                if(row.name==='小区别名') keys.push('别名');
                 keys.filter(Boolean).forEach(key=>map.set(key,row));
             });
             return map;
@@ -4597,10 +4580,9 @@ createApp({
             });
             this.activeCommunityImpactRows.forEach(row=>{
                 if(used.has(row.name)) return;
-                const isAlias=row.type==='小区别名字段';
                 rows.push({
                     label:row.name,
-                    sourceValue:isAlias ? (row.aliasOptions || []).map(item=>item.value).join('、') || '--' : (row.sourceOptions?.[0]?.value || '--'),
+                    sourceValue:row.sourceOptions?.[0]?.value || '--',
                     candidateValue:row.current || '--',
                     state:'需裁决',
                     impactRow:row
@@ -4619,9 +4601,9 @@ createApp({
             if(this.isCommunityAttachTask) return this.activeItem.sourceCommunity || this.activeItem.object;
             return this.activeItem.title || this.activeItem.object;
         },
-        activeFieldRows(){return this.activeItem?.fieldRows || []},
+        activeFieldRows(){return (this.activeItem?.fieldRows || []).filter(row=>row.type!=='小区别名字段')},
         resolvedFieldCount(){
-            return this.activeFieldRows.filter(row=>row.type==='小区别名字段' ? Array.isArray(row.selectedAliases) : row.selectedSourceId).length
+            return this.activeFieldRows.filter(row=>row.selectedSourceId).length
         },
         candidateFieldOptions(){
             return row => (row.sourceOptions || []).filter(option => !(option.checks || []).includes('当前采用'))
@@ -4639,7 +4621,7 @@ createApp({
         },
         activeCommunityImpactRows(){return this.activeItem?.impactFieldRows || []},
         communityImpactResolvedCount(){
-            return this.activeCommunityImpactRows.filter(row=>row.type==='小区别名字段' ? Array.isArray(row.selectedAliases) : row.selectedSourceId).length
+            return this.activeCommunityImpactRows.filter(row=>row.selectedSourceId).length
         },
         communityAttachModeLabel(){
             const mode=this.activeItem?.attachDecision || 'current';
@@ -4656,7 +4638,7 @@ createApp({
             return row => (row.sourceOptions || [])
                 .filter(option => !(option.checks || []).includes('当前采用'))
                 .filter(option => !this.isMissingCommunityValue(option.value))
-	                .map(option => ({...option, rawSource:option.source, rawValue:option.value, source:'采用来源小区值', value:''}))
+                .map(option => ({...option, rawSource:option.source, rawValue:option.value, source:'采用来源值', value:''}))
         },
         communityImpactAdoptionOptions(){
             return row => {
@@ -5304,26 +5286,14 @@ createApp({
 	        communityValueCellClass(row, side){
 	            const impactRow=row?.impactRow;
 	            if(!impactRow) return '';
-	            if(impactRow.type==='小区别名字段'){
-	                const selectedAliases=Array.isArray(impactRow.selectedAliases) ? impactRow.selectedAliases : [];
-	                const selectedOptions=(impactRow.aliasOptions || []).filter(option=>selectedAliases.includes(option.value));
-	                const selectedOnSide=selectedOptions.some(option=>{
-	                    const source=String(option.source || '');
-	                    return side==='target' ? source.includes('当前主小区') : source.includes('来源小区')
-	                });
-	                return this.selectedValueClass(selectedOnSide)
-	            }
 	            const selectedSourceId=impactRow.selectedSourceId;
 	            return this.selectedValueClass(side==='target' ? selectedSourceId==='__current__' : Boolean(selectedSourceId && selectedSourceId!=='__current__'))
 	        },
 	        fieldCurrentCellClass(row){
-	            if(row?.type==='小区别名字段') return this.selectedValueClass(!Array.isArray(row.selectedAliases) || row.selectedAliases.length===0);
 	            return this.selectedValueClass(!row?.selectedSourceId || row.selectedSourceId==='__current__')
 	        },
 	        fieldCandidateCellClass(row, option){
-	            let selected=false;
-	            if(row?.type==='小区别名字段') selected=Array.isArray(row.selectedAliases) && row.selectedAliases.includes(option.value);
-	            else selected=row?.selectedSourceId===option.sourceId;
+	            const selected=row?.selectedSourceId===option.sourceId;
 	            return selected ? 'border-blue-300 bg-blue-50 text-blue-900 font-semibold' : 'border-slate-200 bg-slate-50'
 	        },
         toggleNavGroup(group){this.expandedGroups[group]=!this.expandedGroups[group]},
@@ -5657,10 +5627,6 @@ createApp({
         },
         initFieldReviewRows(){
             (this.activeItem?.fieldRows || []).forEach(row=>{
-                if(row.type==='小区别名字段'){
-                    if(!Array.isArray(row.selectedAliases)) row.selectedAliases=(row.aliasOptions || []).map(item=>item.value);
-                    return;
-                }
 	                if(!row.selectedSourceId){
 	                    row.selectedSourceId='__current__';
 	                    row.selectedSourceLabel='保留主小区值';
@@ -5699,6 +5665,7 @@ createApp({
                     current:currentEmpty ? '空值' : effectiveValue,
                     currentSource:mode==='init' ? '新主小区初始化前为空值' : (currentEmpty ? '无当前事实值' : '主小区当前事实值'),
                     currentMethod,
+                    hasExplicitDecision:Boolean(decision),
                     currentUnformed:currentEmpty,
                     sourceOptions:[{sourceId:`__source__-${label}`,source:this.activeItem.source,value:sourceValue,updatedAt:this.activeItem.sourceUpdatedAt || '-',checks:['来源已挂接']}]
                 };
@@ -5708,22 +5675,25 @@ createApp({
                 if(this.isMissingCommunityValue(sourceValue)) return false;
                 return row.current !== sourceValue;
             });
-            const targetName=this.activeComparisonTarget?.title || this.activeItem.currentMaster;
-            const aliasOptions=this.buildAliasOptions(targetName, sourceFields, targetFields);
             this.activeItem.impactFieldRows=[
-                ...ordinaryRows.map(row=>({
-                    ...row,
-                    selectedSourceId:mode==='init'
-                        ? (this.isMissingCommunityValue(row.sourceOptions[0].value) ? '__empty__' : row.sourceOptions[0].sourceId)
-                        : (row.currentUnformed ? row.sourceOptions[0].sourceId : '__current__'),
-                    selectedSourceLabel:mode==='init'
-                        ? (this.isMissingCommunityValue(row.sourceOptions[0].value) ? '初始化后为空值' : `${row.sourceOptions[0].source} · ${row.sourceOptions[0].value}`)
-                        : (row.currentUnformed ? `${row.sourceOptions[0].source} · ${row.sourceOptions[0].value}` : '保留主小区事实值'),
+                ...ordinaryRows.map(row=>{
+                    const defaultToSource=mode!=='init' && !row.currentUnformed && row.currentMethod==='人工导入' && !row.hasExplicitDecision;
+                    const useSource=mode==='init'
+                        ? !this.isMissingCommunityValue(row.sourceOptions[0].value)
+                        : row.currentUnformed || defaultToSource;
+                    return {
+                        ...row,
+                        selectedSourceId:mode==='init'
+                            ? (useSource ? row.sourceOptions[0].sourceId : '__empty__')
+                            : (useSource ? row.sourceOptions[0].sourceId : '__current__'),
+                        selectedSourceLabel:mode==='init'
+                            ? (useSource ? `${row.sourceOptions[0].source} · ${row.sourceOptions[0].value}` : '初始化后为空值')
+                            : (useSource ? `${row.sourceOptions[0].source} · ${row.sourceOptions[0].value}` : '保留主小区事实值'),
 	                    decision:mode==='init'
-	                        ? (this.isMissingCommunityValue(row.sourceOptions[0].value) ? '初始化后为空值' : `初始化后采用${row.sourceOptions[0].source}值`)
-	                        : (row.currentUnformed ? '采用来源小区值' : '保留主小区事实值')
-                })),
-                {name:'小区别名',type:'小区别名字段',compareLabel:'别名',current:this.communityAliasPreview(targetFields,targetName),currentSource:mode==='init' ? '初始化后纳入别名集合' : '当前主小区别名集合',aliasOptions,selectedAliases:aliasOptions.map(item=>item.value)}
+	                        ? (useSource ? `初始化后采用${row.sourceOptions[0].source}值` : '初始化后为空值')
+                        : (useSource ? '采用来源值' : '保留主小区事实值')
+                    }
+                })
             ];
         },
         backToTasks(){
@@ -5841,6 +5811,23 @@ createApp({
         communityListingCount(community){
             return this.accessHouseData.filter(item=>item.community===community?.name).length
         },
+        communityAliasValues(community){
+            if(!community) return [];
+            const sourceValues=this.accessCommunityData
+                .filter(item=>item.masterCommunityId===community.id)
+                .flatMap(item=>[item.communityName,item.alias]);
+            return [...new Set([community.alias,...sourceValues]
+                .flatMap(value=>this.normalizeAliasValues(value)))]
+                .filter(value=>value!==community.name && value!=='--' && value!=='—');
+        },
+        communityDisplayAliases(community){
+            return this.communityAliasValues(community).join('、') || '—'
+        },
+        mergedCommunityAliases(base,source,finalName){
+            return [...new Set([base.name,...this.communityAliasValues(base),source.name,...this.communityAliasValues(source)])]
+                .filter(value=>value && value!==finalName && value!=='--' && value!=='—')
+                .join('、') || '—'
+        },
         selectMergeBase(item){
             this.mergeBaseCommunity={...item};
             this.mergeFieldRows=this.buildCommunityMergeFields(item,this.mergeSourceCommunity);
@@ -5848,11 +5835,8 @@ createApp({
         },
         buildCommunityMergeFields(base,source){
             const sourceSource=source.name.includes('云锦') ? '365小区' : '好好选房小区';
-            const aliasOptions=this.buildAliasOptions(base.name,[{label:'小区名称',value:source.name},{label:'别名',value:source.name.includes('云锦') ? '云锦东方一期, 云锦东方一街区' : `${source.name}, ${source.name}花园`}],[{label:'小区名称',value:base.name},{label:'别名',value:base.name.includes('溪语') ? '溪语悦庭花园' : base.name}]);
-            const aliasField={name:'小区别名',type:'小区别名字段',baseValue:this.communityAliasPreview([{label:'小区名称',value:base.name},{label:'别名',value:base.name.includes('溪语') ? '溪语悦庭花园' : base.name}],base.name),baseSource:'当前主小区别名集合',sourceValue:this.communityAliasPreview([{label:'小区名称',value:source.name},{label:'别名',value:source.name.includes('云锦') ? '云锦东方一期, 云锦东方一街区' : `${source.name}, ${source.name}花园`}],source.name),sourceSource:'被合并主小区来源集合',selectedAliases:aliasOptions.map(item=>item.value),aliasOptions};
             const fields=[
                 {name:'标准小区名',type:'普通事实字段',baseValue:base.name,baseSource:'贝壳小区',sourceValue:source.name,sourceSource,choice:'base'},
-                aliasField,
                 {name:'行政区',type:'普通事实字段',baseValue:base.district,baseSource:'贝壳小区',sourceValue:source.district,sourceSource,choice:'base'},
                 {name:'板块',type:'普通事实字段',baseValue:base.block,baseSource:'贝壳小区',sourceValue:source.block,sourceSource,choice:'base'},
                 {name:'物业类型',type:'普通事实字段',baseValue:'住宅',baseSource:'贝壳小区',sourceValue:source.name.includes('公寓') ? '公寓' : '普通住宅',sourceSource,choice:'base'},
@@ -5860,13 +5844,13 @@ createApp({
                 {name:'楼栋数',type:'普通事实字段',baseValue:'12栋',baseSource:'贝壳小区',sourceValue:'14栋',sourceSource,choice:'base'}
             ];
             return fields.map(field=>{
-                if(field.type==='小区别名字段') return field;
                 const catalogName=field.name==='标准小区名'?'小区名称':field.name;
                 for(const side of [{item:base,prefix:'base'},{item:source,prefix:'source'}]){
                     const fact=this.communityImportBaseFact(side.item.id,catalogName);
                     const imported=this.communityImportCandidateFor(side.item.id,catalogName);
                     const factValue=this.communityImportHasValue(fact.value) ? fact.value : null;
                     const importedValue=!factValue && this.communityImportHasValue(imported?.value) ? imported.value : null;
+                    field[side.prefix+'HasExplicitDecision']=Boolean(fact.decision);
                     if(importedValue){
                         field[side.prefix+'Value']=importedValue;
                         field[side.prefix+'Source']=imported.batchId || '导入批次';
@@ -5876,6 +5860,8 @@ createApp({
                         field[side.prefix+'Method']=factValue ? fact.method : '来源采用'
                     }
                 }
+                if(!field.baseHasExplicitDecision && field.baseMethod==='人工导入' && field.sourceMethod==='来源采用' && this.communityImportHasValue(field.sourceValue)) field.choice='source';
+                else if(!field.sourceHasExplicitDecision && field.sourceMethod==='人工导入' && field.baseMethod==='来源采用' && this.communityImportHasValue(field.baseValue)) field.choice='base';
                 return field
             })
         },
@@ -5885,11 +5871,9 @@ createApp({
             this.mergeConfirmed=false
         },
         mergeFieldResult(field){
-            if(field.type==='小区别名字段') return field.selectedAliases.length ? field.selectedAliases.join('、') : '未纳入别名';
             return field.choice==='source' ? `${field.sourceValue}（${field.sourceSource}）` : `${field.baseValue}（${field.baseSource}）`
         },
         mergeFieldDecisionLabel(field){
-            if(field.type==='小区别名字段') return field.selectedAliases.length ? `纳入 ${field.selectedAliases.length} 项别名` : '不纳入别名';
             return field.choice==='source' ? `采用被合并值` : '保留基准值'
         },
         executeCommunityMerge(){
@@ -5910,16 +5894,18 @@ createApp({
                 const name=field.name==='标准小区名'?'小区名称':field.name;
                 this.communityFactDecisions[this.communityFactDecisionKey(base.id,name)]={value:takeSource?field.sourceValue:field.baseValue,method:takeSource?field.sourceMethod:field.baseMethod,decision:takeSource?'采用被合并主小区事实值':'保留基准主小区事实值',context:'主小区合并 '+source.id,time,source:takeSource?field.sourceSource:field.baseSource}
             });
-            this.mergeFieldRows.filter(item=>item.type==='小区别名字段').forEach(field=>{
-                const fact=this.communityFacts.find(item=>item.name===field.name);
-                if(fact){
-                    fact.value=field.selectedAliases.join('、') || '-';
-                    fact.source='全部已挂接来源';
-                    fact.formation='别名汇总';
-                    fact.status='无来源差异';
-                    fact.updatedAt='2026-06-25 16:30'
-                }
-            });
+            const nameDecision=this.mergeFieldRows.find(field=>field.name==='标准小区名');
+            const finalName=nameDecision?.choice==='source' ? nameDecision.sourceValue : base.name;
+            base.alias=this.mergedCommunityAliases(base,source,finalName);
+            base.name=finalName;
+            const aliasFact=this.communityFacts.find(item=>item.name==='小区别名');
+            if(aliasFact){
+                aliasFact.value=base.alias==='—' ? '-' : base.alias;
+                aliasFact.source='全部已挂接来源';
+                aliasFact.formation='别名汇总';
+                aliasFact.status='无来源差异';
+                aliasFact.updatedAt='2026-06-25 16:30'
+            }
             this.audits.unshift({
                 id:Date.now(),
                 time:'2026-06-25 16:30',
@@ -6182,24 +6168,17 @@ createApp({
 		                row.decision='保留主小区事实值';
 	                return;
 	            }
-	            row.decision=this.communityAttachModeIsInit ? '初始化后采用来源小区值' : '采用来源小区值'
+            row.decision=this.communityAttachModeIsInit ? '初始化后采用来源小区值' : '采用来源值'
         },
         selectFieldAdoption(row, option){
 	            if(this.isTaskReadonly) return;
 	            row.selectedSourceLabel=option.source;
 	            row.decision=option.sourceId==='__current__' ? '保留主小区值' : '采用来源候选值'
         },
-        toggleAliasSelection(row, value){
-            if(this.isTaskReadonly) return;
-            if(!Array.isArray(row.selectedAliases)) row.selectedAliases=[];
-            const index=row.selectedAliases.indexOf(value);
-            if(index>-1) row.selectedAliases.splice(index,1);
-            else row.selectedAliases.push(value);
-        },
         submitCommunityAttachAudit(){
             if(this.isTaskReadonly) return;
             if(this.activeItem.attachDecision==='adjust' && !this.activeItem.selectedAdjustCommunity){this.toast('请先选择目标主小区');return}
-            if(this.activeCommunityImpactRows.some(row=>row.type==='小区别名字段' ? !Array.isArray(row.selectedAliases) : !row.selectedSourceId)){this.toast('请确认全部受影响字段的采用结果');return}
+            if(this.activeCommunityImpactRows.some(row=>!row.selectedSourceId)){this.toast('请确认全部受影响字段的采用结果');return}
             this.activeItem.status='已处理';
             this.activeItem.processedAt='2026-06-26 11:30';
             this.activeItem.relation='已挂接';
@@ -6211,7 +6190,7 @@ createApp({
                     const keep=row.selectedSourceId==='__current__';
                     const selected=row.sourceOptions?.find(option=>option.sourceId===row.selectedSourceId);
                     const name=COMMUNITY_FIELD_NAME_MAP[row.compareLabel] || row.compareLabel;
-                    this.communityFactDecisions[this.communityFactDecisionKey(target.id,name)]={value:keep?row.current:selected?.value || null,method:keep?row.currentMethod:'来源采用',decision:keep?'保留主小区事实值':'采用来源小区值',context:'来源挂接审核 '+this.activeItem.id,time,source:keep?row.currentSource:selected?.source || ''}
+                    this.communityFactDecisions[this.communityFactDecisionKey(target.id,name)]={value:keep?row.current:selected?.value || null,method:keep?row.currentMethod:'来源采用',decision:keep?'保留主小区事实值':'采用来源值',context:'来源挂接审核 '+this.activeItem.id,time,source:keep?row.currentSource:selected?.source || ''}
                 })
             }
             this.activeItem.currentMaster=target?.title || this.activeItem.currentMaster || '';
@@ -6241,7 +6220,7 @@ createApp({
         adjustFieldRelation(){if(this.isTaskReadonly) return; this.activeItem.status='已处理'; this.activeItem.processedAt='2026-06-26 11:30'; this.syncActiveTask(); this.currentMenu='tasks'; this.toast('已提交来源关系调整结论')},
         submitFieldReview(){
             if(this.isTaskReadonly) return;
-            if(this.activeFieldRows.some(row=>row.type==='小区别名字段' ? !Array.isArray(row.selectedAliases) : !row.selectedSourceId)){this.toast('请确认全部字段的采用结果');return}
+            if(this.activeFieldRows.some(row=>!row.selectedSourceId)){this.toast('请确认全部字段的采用结果');return}
             this.activeItem.status='已处理';
             this.activeItem.processedAt='2026-06-26 11:30';
             this.activeItem.result='已完成本批字段裁决';
