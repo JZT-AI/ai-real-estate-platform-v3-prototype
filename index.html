@@ -2826,6 +2826,7 @@ const REAL_STANDARD_FACTS = [
             listingStatusFact({value:'疑似下架',sourceRecordStatus:'上架',sourceUpdatedAt:'2026-06-08 08:30'}),
             sourceFact('房源标题','基础与交易','裕顺雅苑旁居家精装修三房两卫全明户型有车位南北通透','2026-06-08 08:30'),sourceFact('小区名称','基础与交易','百市西苑','2026-06-08 08:30'),sourceFact('挂牌总价','基础与交易','368','2026-06-08 08:30'),sourceFact('挂牌单价','基础与交易','26552','2026-06-08 08:30'),sourceFact('房屋权属','基础与交易','房改房','2026-06-08 08:30'),sourceFact('物业类型','基础与交易','普通住宅','2026-06-08 08:30'),
             sourceFact('户型','户型与建筑','3室2厅','2026-06-08 08:30'),sourceFact('建筑面积','户型与建筑','138.60㎡','2026-06-08 08:30'),sourceFact('所在楼层','户型与建筑','高楼层','2026-06-08 08:30'),sourceFact('总楼层','户型与建筑','6层','2026-06-08 08:30'),elevatorFact('无电梯','2026-06-08 08:30'),sourceFact('朝向','户型与建筑','南北朝向','2026-06-08 08:30'),sourceFact('日照','户型与建筑','日照约8.8小时','2026-06-08 08:30'),sourceFact('建筑类型','户型与建筑','板楼','2026-06-08 08:30'),
+            sourceFact('房源动态','动态与评价','2026-06-08降价10万；2026-04-18降价10万；2026-03-01挂牌388万','2026-06-08 08:30'),
             repricingFact(1,'2026-06-08降价10万；2026-04-18降价10万；2026-03-01挂牌388万','2026-07-28'),
             sourceFact('房源评价','动态与评价','房子装修是业主当年的婚装，保养比较好，实木地板，要求不高是可以拎包入住的','2026-06-08 08:30'),
             beikeContentFact('必看好房（贝壳）','必看好房','2026-09-01 10:40','',[],'必看好房、满两年、客厅朝南、明厨明卫'),
@@ -2836,13 +2837,14 @@ const REAL_STANDARD_FACTS = [
             {name:'装修情况',group:'户型与建筑',value:'精装',status:'装修情况识别',sourceType:'房源标题、房源评价',strategyId:'DECOR-EXT-1.3',updatedAt:'2026-06-08 08:30',evidence:[{type:'房源标题',value:'居家精装修',state:'命中',meta:'明确装修等级词'},{type:'房源评价',value:'可以拎包入住',state:'仅作支持证据',meta:'“拎包入住”单独出现时不形成装修等级'}],rejected:'不将“拎包入住”单独等同于精装'},
             {name:'户型特点',group:'户型与建筑',value:'全明格局、南北通透',status:'户型特点加工',sourceType:'房源标题',strategyId:'HOUSE-FEATURE-EXT-1.0',updatedAt:'2026-06-08 08:30',evidence:[{type:'房源标题',value:'全明户型、南北通透',state:'命中',meta:'两个特点均有明确文本'}]}
         ]
-    }
+    },
+    {id:'SHF-NJ-0008823',title:'金陵湾 2室1厅 89㎡',source:'巧房房源',sourceHouseId:'QF-NJ-11780',community:'金陵湾',masterCommunityName:'金陵湾',communityId:'MC-NJ-11031',district:'鼓楼区',block:'江东门',layout:'2室1厅1卫',area:'89.00㎡',price:'410万',priceValue:410,saleStatus:'上架',sourceListingTime:'2026-06-14 09:30:00',firstSeen:'2026-06-15 13:48',summary:'巧房 delegateTime 提供挂牌时间',coverage:'78%',issueStatus:'来源采用',version:'生产版本 2026-07-09',updatedAt:'2026-07-09 18:42',fields:[{name:'挂牌总价',value:'410',status:'来源采用',sourceType:'巧房房源',rawValue:'410',updatedAt:'2026-07-09 18:42'},{name:'建筑面积',value:'89.00㎡',status:'来源采用',sourceType:'巧房房源',rawValue:'89',updatedAt:'2026-07-09 18:42'}]}
 ];
 
 // 当前数据字段以《数据资产字段清单0721》为准；样例无值时保留字段并明确显示“无数据”。
 const HOUSE_FIELD_CATALOG = [
     ['基本信息',['房源标题','行政区','板块','楼栋信息']],
-    ['交易信息',['挂牌状态','挂牌总价（万元）','挂牌单价（元/㎡）','房屋权属','抵押信息','税费相关']],
+    ['交易信息',['挂牌状态','挂牌时间','挂牌总价（万元）','挂牌单价（元/㎡）','房屋权属','抵押信息','税费相关']],
     ['户型与建筑',['户型','户型结构','房源特色','户型特点','建筑面积','楼层','总楼层','梯户比例','电梯','朝向','日照','装修情况','建成年代','建筑类型','物业类型']],
     ['动态信息',['房源动态明细','近7天带看次数','近30天带看次数','近3个月调价次数','近半年调价次数']],
     ['联系信息',['经纪人姓名','经纪人电话']],
@@ -2866,6 +2868,7 @@ const HOUSE_FIELD_PRODUCTION_SCHEME = {
     '板块':'DATA-HOUSE-SOURCE-COMMUNITY-LOCATION',
     '房屋权属':'DATA-HOUSE-OWNERSHIP',
     '挂牌状态':'DATA-HOUSE-LISTING-STATUS',
+    '挂牌时间':'DATA-HOUSE-LISTING-TIME',
     '户型结构':'DATA-HOUSE-LAYOUT-STRUCTURE',
     '电梯':'DATA-HOUSE-ELEVATOR',
     '装修情况':'DECOR-EXT-1.3',
@@ -2880,6 +2883,10 @@ const alignHouseFieldsToCatalog = (fact) => {
         const name=HOUSE_FIELD_NAME_MAP[field.name] || field.name;
         if(!renamed.has(name)) renamed.set(name,{...field,name})
     });
+    const dynamicText=String(renamed.get('房源动态明细')?.value || '');
+    const listingEvents=[...dynamicText.matchAll(/(\d{4}-\d{1,2}-\d{1,2})(?:\s+(\d{2}:\d{2}(?::\d{2})?))?\s*挂牌(?!价)/g)]
+        .map(match=>({record:match[0],time:match[2]?`${match[1]} ${match[2]}`:match[1]}))
+        .sort((a,b)=>b.time.localeCompare(a.time));
     const seeds={
         '房源标题':fact.title,
         '挂牌状态':fact.saleStatus,
@@ -2887,10 +2894,16 @@ const alignHouseFieldsToCatalog = (fact) => {
         '板块':fact.block
     };
     fact.fields=HOUSE_FIELD_CATALOG.flatMap(([group,names])=>names.map(name=>{
+        if(name==='挂牌时间'){
+            const sourceValue=fact.sourceListingTime || null;
+            const dynamicRecord=listingEvents[0] || null;
+            const value=sourceValue || dynamicRecord?.time || null;
+            return {name,group,value,status:'生产方案',sourceType:sourceValue?`${fact.source}·挂牌时间`:'来源房源·房源动态明细',sourceFieldLabel:sourceValue?'来源房源.挂牌时间':'来源房源.房源动态明细',rawValue:sourceValue || dynamicRecord?.record,strategyId:'DATA-HOUSE-LISTING-TIME',strategyVersion:'V1.0',updatedAt:fact.updatedAt,noValueReason:value?'':(dynamicText?'规则未形成结果':'无可用输入'),evidence:value?[{type:sourceValue?'来源房源挂牌时间':'房源动态明细',value:sourceValue || dynamicRecord.record,state:'已使用',meta:sourceValue?'来源字段有值，优先采用':'来源字段为空，提取最新一条明确挂牌记录；保留原始精度'}]:[]};
+        }
         const existing=renamed.get(name);
         const history=HOUSE_FIELD_HISTORY[fact.sourceHouseId]?.[name]?.values || [];
         const value=seeds[name] || history[history.length-1]?.displayValue || '无数据';
-        const field=existing ? {...existing,group,sourceFieldLabel:name} : sourceFact(name,group,value,fact.updatedAt,value,value==='无数据'?'来源未提供该字段':'按来源值直接采用');
+        const field=existing ? {...existing,group,sourceFieldLabel:name} : {...sourceFact(name,group,value,fact.updatedAt,value,value==='无数据'?'来源未提供该字段':'按来源值直接采用'),sourceType:fact.source};
         const strategyId=field.strategyId || HOUSE_FIELD_PRODUCTION_SCHEME[name] || '';
         if(!strategyId) return field;
         if(name==='行政区' || name==='板块'){
@@ -3474,7 +3487,8 @@ createApp({
                 { id:'4002548', recordType:'house', sourceName:'辉达房源', title:'悦和院,中铁五号院4室2厅157.1m²精装修', community:'悦和院', masterCommunityId:'MC-HF-20456', masterCommunityName:'悦和院', district:'包河区', block:'骆岗', layout:'4室2厅1厨2卫', area:'157.1㎡', price:'418万', unitPrice:'26607元/㎡', status:'在售', firstTime:'2026-06-08 09:40:56', lastTime:'2026-06-08 09:40:56', buildYear:'--', orientation:'南', floor:'11层', history:[{time:'2026-06-08 09:40:56',content:'辉达来源首次接入该房源。'},{time:'2026-06-08 09:40:56',content:'同步面积、总价和户型信息。'}]},
                 { id:'3999876', recordType:'house', sourceName:'辉达房源', title:'华孚城隍庙商业广场3室2厅137.5m²满五年', community:'华孚城隍庙商业广场', masterCommunityId:'MC-HF-20477', masterCommunityName:'华孚城隍庙商业广场', district:'庐阳区', block:'四里河', layout:'3室2厅1厨2卫', area:'137.5㎡', price:'200万', unitPrice:'14545元/㎡', status:'在售', firstTime:'2026-06-07 23:13:28', lastTime:'2026-06-08 04:07:11', buildYear:'2009年', orientation:'南', floor:'10层', history:[{time:'2026-06-08 04:07:11',content:'辉达来源刷新最近更新时间。'},{time:'2026-06-07 23:13:28',content:'房源首次入库并写入“满五年”标签。'}]},
                 { id:'4000124', recordType:'house', sourceName:'巧房房源', title:'前进花园(西区) 2室2厅2卫 南', community:'前进花园(西区)', masterCommunityId:'MC-NJ-10428', masterCommunityName:'前进花园(西区)', district:'江宁区', block:'东山', layout:'2室2厅2卫', area:'85.24㎡', price:'90万', unitPrice:'10558.42元/㎡', status:'在售', firstTime:'2026-06-07 23:18:35', lastTime:'2026-06-07 23:18:35', buildYear:'2000年', orientation:'南', floor:'6层', history:[{time:'2026-06-07 23:18:35',content:'巧房来源同步刚需房样本。'},{time:'2026-06-07 23:18:35',content:'来源第三方 ID 为 2011d244-0d96-48a6-aae7-24733b97ae34。'}]},
-                { id:'QF-NJ-68139', recordType:'house', sourceName:'巧房房源', title:'金地名京复式两房 带露台 东南向', community:'金地名京', masterCommunityId:'MC-NJ-10086', masterCommunityName:'金地名京', district:'建邺区', block:'奥体', layout:'2室2厅', area:'74.1㎡', price:'318万', unitPrice:'42915元/㎡', status:'在售', firstTime:'2026-06-07 23:18:35', lastTime:'2026-06-08 09:28:12', buildYear:'2012年', orientation:'东南', floor:'低楼层', history:[{time:'2026-06-07 23:18:35',content:'巧房来源同步复式两房样本。'}]}
+                { id:'QF-NJ-68139', recordType:'house', sourceName:'巧房房源', title:'金地名京复式两房 带露台 东南向', community:'金地名京', masterCommunityId:'MC-NJ-10086', masterCommunityName:'金地名京', district:'建邺区', block:'奥体', layout:'2室2厅', area:'74.1㎡', price:'318万', unitPrice:'42915元/㎡', status:'在售', firstTime:'2026-06-07 23:18:35', lastTime:'2026-06-08 09:28:12', buildYear:'2012年', orientation:'东南', floor:'低楼层', listingTime:'2026-06-06 10:20:00', history:[{time:'2026-06-07 23:18:35',content:'巧房来源同步复式两房样本。'}]},
+                { id:'QF-NJ-11780', recordType:'house', sourceName:'巧房房源', title:'金陵湾 2室1厅 89㎡', community:'金陵湾', masterCommunityId:'MC-NJ-11031', masterCommunityName:'金陵湾', district:'鼓楼区', block:'江东门', layout:'2室1厅1卫', area:'89㎡', price:'410万', status:'在售', listingTime:'2026-06-14 09:30:00', firstTime:'2026-06-15 13:48', lastTime:'2026-07-09 18:42', history:[{time:'2026-07-09 18:42',content:'巧房 delegateTime 对应的挂牌时间同步为 2026-06-14 09:30:00。'}]}
             ],
             accessCommunityData:[
                 { id:'147014', recordType:'community', sourceName:'贝壳小区', communityName:'滨江新村', district:'镜湖区', block:'八佰伴', avgPrice:'11606元/㎡', onSaleCount:'7套', newListedCount:'--', firstTime:'2026-02-17 12:00:12', lastTime:'2026-09-01 10:45', alias:'--', address:'镜湖区滨江路', buildYear:'1998年', developer:'--', propertyCompany:'无物业管理服务', masterCommunityId:'MC-WH-147014', masterCommunityName:'滨江新村', relationType:'贝壳小区初始化', relationUpdatedAt:'2026-02-17 12:00:12', history:[{time:'2026-06-08 01:03:14',content:'贝壳小区同步挂牌均价与在售套数。'},{time:'2026-02-17 12:00:12',content:'贝壳小区初始化主小区 MC-WH-147014。'}]},
@@ -3717,6 +3731,7 @@ createApp({
             qualityStrategies:[
                 {id:'DATA-HOUSE-ONLY-HOME',option:'房源唯一住房识别',name:'房源唯一住房识别',assetCategory:'数据加工',targetObject:'房源',targetResult:'是否唯一',field:'是否唯一',inputs:'税费相关、房源标题、房源描述',version:'V1.0',sources:'来源房源',status:'启用',feedbackMode:'无',needsLearning:false,summary:"从税费相关字段及房源文本中识别该房源是否属于业主唯一住房。"},
                 {id:'DATA-HOUSE-LISTING-STATUS',option:'DATA-HOUSE-LISTING-STATUS 挂牌状态生产',name:'挂牌状态生产',assetCategory:'数据加工',targetObject:'房源',targetResult:'上架 / 下架 / 疑似下架',field:'挂牌状态',inputs:'来源平台、来源对象－房源－记录状态、来源对象－房源－最近更新时间',version:'V1.0',sources:'全部来源房源',status:'启用',feedbackMode:'无',needsLearning:false,summary:'非贝壳来源采用记录状态；贝壳上架房源按30个自然日判断是否疑似下架。',rule:'非贝壳来源直接使用来源对象－房源－记录状态。贝壳来源记录为下架时输出“下架”；记录为上架且最近更新时间距计算日超过30个自然日时输出“疑似下架”，否则输出“上架”。计算日为每日任务的实际执行日期，具体执行时点由技术确定。疑似下架每日检测，来源重新更新且仍为上架时恢复“上架”。'},
+                {id:'DATA-HOUSE-LISTING-TIME',option:'DATA-HOUSE-LISTING-TIME 房源挂牌时间生产',name:'房源挂牌时间生产',assetCategory:'数据加工',targetObject:'房源',targetResult:'挂牌时间',field:'挂牌时间',inputs:'来源对象－房源－挂牌时间；来源对象－房源－房源动态明细',version:'V1.0',sources:'全部来源房源',status:'启用',feedbackMode:'无',needsLearning:false,summary:'优先采用来源房源挂牌时间；无有效值时从房源动态明细提取最新的明确挂牌事件时间。',rule:'来源挂牌时间可解析时直接采用；否则从动态明细中提取最新一条明确挂牌事件的时间。调价、带看、下架、挂牌价及平台首次接入时间不作为挂牌事件。两处均无有效时间时结果为空；保留原始精度及实际使用的取值依据。',noResult:'来源挂牌时间与房源动态明细均缺失时为“无可用输入”；存在内容但没有可解析的挂牌事件时间时为“规则未形成结果”。'},
                 {id:'DATA-HOUSE-BEIKE-TAG-CLASSIFY',option:'DATA-HOUSE-BEIKE-TAG-CLASSIFY 贝壳房源标签分类加工',name:'贝壳房源标签分类加工',assetCategory:'数据加工',targetObject:'房源',targetResult:'必看好房（贝壳）、房源特色（贝壳）、房源特征（贝壳）',field:'必看好房（贝壳）、房源特色（贝壳）、房源特征（贝壳）',inputs:'贝壳来源对象－房源－房源特色',version:'V1.0',sources:'贝壳来源房源',status:'启用',feedbackMode:'无',needsLearning:false,summary:'从贝壳来源房源“房源特色”的完整标签集合加工三项房源字段。',rule:'标签集合包含“必看好房”时输出必看好房（贝壳）；其余标签按已生效枚举分类输出房源特色（贝壳）或房源特征（贝壳）。未分类标签保留在来源房源特色，不形成实体输出。来源字段为空时三项输出为空。'},
                 {id:'DATA-HOUSE-SOURCE-COMMUNITY-LOCATION',option:'DATA-HOUSE-SOURCE-COMMUNITY-LOCATION 房源行政区及板块生产',name:'房源行政区及板块生产',assetCategory:'数据加工',targetObject:'房源',targetResult:'行政区、板块',field:'行政区、板块',inputs:'来源房源行政区、来源房源板块、来源房源所属来源小区行政区、来源房源所属来源小区板块',version:'V1.1',sources:'全部来源房源',status:'启用',feedbackMode:'无',needsLearning:false,summary:'来源房源字段有值即采用；为空时使用其所属来源小区对应字段补充。',rule:'行政区和板块分别处理：来源房源对应字段有值时直接采用；为空时使用其所属来源小区对应字段；两处均为空时输出“-”。不使用主小区字段，不建设或调用行政区、板块字典，也不做格式、城市归属、层级或两处来源值的一致性校验。'},
                 {id:'DATA-HOUSE-OWNERSHIP',option:'DATA-HOUSE-OWNERSHIP 房屋权属识别',name:'房屋权属识别',assetCategory:'数据加工',targetObject:'房源',targetResult:'标准房屋权属',field:'房屋权属',inputs:'来源平台、来源产权、交易权属和房屋性质',version:'V1.0',sources:'全部来源',status:'启用',feedbackMode:'无',needsLearning:false,summary:'将多来源权属值映射为统一标准值。',rule:'按来源平台和来源原值映射；未命中、冲突或原值无效时输出为空。'},
@@ -3954,6 +3969,7 @@ createApp({
 		                'RECENT-DEAL-1.0':'关联成交记录或已确认主小区关系新增、变化。',
                 'DATA-COMMUNITY-ALIAS':'来源小区名称或别名、有效挂接关系、主小区标准名称新增或变化；主小区合并后重算受影响主小区。',
                 'DATA-HOUSE-LISTING-STATUS':'来源平台、来源对象－房源－记录状态或来源对象－房源－最近更新时间变化；贝壳上架和疑似下架每日检测。',
+                'DATA-HOUSE-LISTING-TIME':'挂牌状态为上架或疑似下架时，来源挂牌时间或房源动态明细新增、变化、清空后重算；下架期间停止更新，恢复后重算。',
                 'DATA-COMMUNITY-LAYOUT':'贝壳来源户型、户型图、关联房源属性或主小区及户型关系新增、变化。'
 	            };
 	            const methods={
@@ -3965,6 +3981,7 @@ createApp({
 	                'RECENT-DEAL-1.0':'以主小区名称和已挂接来源小区名称作为归属候选，仅名称完全匹配的成交可进入结果；去重后按成交日期倒序取最近 0 至 10 条。',
                 'DATA-COMMUNITY-ALIAS':'汇总当前主小区下全部有效挂接来源的小区名称和别名；剔除主小区当前标准名称，按既有口径标准化、去重并稳定排序。审核页只在小区名称下方展示别名，不提供纳入裁决。',
 		                'DATA-HOUSE-LISTING-STATUS':'非贝壳来源直接采用来源对象－房源－记录状态；贝壳来源记录为下架时输出下架，记录为上架时按最近更新时间与每日任务执行日期的自然日差值判断上架或疑似下架。',
+                'DATA-HOUSE-LISTING-TIME':'来源挂牌时间可解析时优先采用；无有效来源值时，从房源动态明细取最新一条明确挂牌事件的时间。调价、带看、下架、挂牌价及平台首次接入时间不参与提取；保留日期或日期时间的实际精度。',
                 'DATA-COMMUNITY-LAYOUT':'相同来源户型标识或完全一致户型图片去重形成具体户型；只关联符合方案条件的贝壳房源，再过滤挂牌状态不为上架、关系失效和价格非法的房源后计算当前挂牌指标。'
 	            };
             return [
@@ -4110,7 +4127,7 @@ createApp({
             const item=this.accessSelectedItem;
             if(!item) return [];
             const map = {
-                house:[['房源标题','title'],['小区名称','community'],['户型','layout'],['建筑面积','area'],['挂牌总价','price'],['挂牌单价','unitPrice'],['在售状态','status'],['朝向','orientation'],['楼层','floor'],['建成年代','buildYear'],['房源描述','description']],
+                house:[['房源标题','title'],['小区名称','community'],['户型','layout'],['建筑面积','area'],['挂牌时间','listingTime'],['挂牌总价','price'],['挂牌单价','unitPrice'],['在售状态','status'],['朝向','orientation'],['楼层','floor'],['建成年代','buildYear'],['房源描述','description']],
                 community:[['小区名称','communityName'],['行政区','district'],['板块','block'],['挂牌均价','avgPrice'],['在售套数','onSaleCount'],['新上套数','newListedCount'],['别名','alias'],['地址','address'],['开发商','developer'],['物业公司','propertyCompany']],
                 project:[['楼盘名称','projectName'],['楼盘别名','alias'],['物业类型','propertyType'],['参考均价','referenceAvgPrice'],['参考总价','referenceTotalPrice'],['行政区','district'],['板块','block'],['楼盘地址','address'],['经度','longitude'],['纬度','latitude'],['销售状态','status'],['开盘时间','openingTime'],['售楼电话','salePhone']],
                 transaction:[['小区名称','communityName'],['成交日期','dealDate'],['成交总价','dealPrice'],['建筑面积','area'],['户型','layout'],['成交单价','unitPrice'],['行政区','district'],['板块','block']],
