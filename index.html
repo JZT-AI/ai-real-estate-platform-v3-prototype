@@ -4,6 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>AI房地产数据平台 V3.0</title>
+    <script src="B端发房共用资源/房源演示服务.js"></script>
+    <script src="B端发房共用资源/房源上传示例数据.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/vue@3/dist/vue.global.prod.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -1506,7 +1508,7 @@
                     <template #action><span class="text-xs text-slate-500 whitespace-nowrap">统计截至 {{ accessCurrentOverview.snapshotAt }} · 每1小时刷新</span></template>
                     <div class="ui-table-scroll">
                         <table class="ui-table ui-access-monitor-table divide-y divide-slate-200">
-                            <thead class="bg-slate-50"><tr><th class="ui-col-name px-5 py-3 text-left text-xs font-medium text-slate-500">来源名称</th><th class="ui-col-frequency px-5 py-3 text-left text-xs font-medium text-slate-500">更新频率</th><th class="ui-col-number px-5 py-3 text-xs font-medium text-slate-500">今日累计总量</th><th class="ui-col-number px-5 py-3 text-xs font-medium text-slate-500">今日新增</th><th class="ui-col-number px-5 py-3 text-xs font-medium text-slate-500">今日更新</th><th class="ui-col-datetime px-5 py-3 text-left text-xs font-medium text-slate-500">最近更新时间</th></tr></thead>
+                            <thead class="bg-slate-50"><tr><th class="ui-col-name px-5 py-3 text-left text-xs font-medium text-slate-500">来源名称</th><th class="ui-col-frequency px-5 py-3 text-left text-xs font-medium text-slate-500">更新方式</th><th class="ui-col-number px-5 py-3 text-xs font-medium text-slate-500">今日累计总量</th><th class="ui-col-number px-5 py-3 text-xs font-medium text-slate-500">今日新增</th><th class="ui-col-number px-5 py-3 text-xs font-medium text-slate-500">今日更新</th><th class="ui-col-datetime px-5 py-3 text-left text-xs font-medium text-slate-500">最近更新时间</th></tr></thead>
                             <tbody class="divide-y divide-slate-200 bg-white"><tr v-for="row in accessCurrentOverviewTable" :key="row.id" class="hover:bg-slate-50"><td class="ui-col-name px-5 py-4 text-sm font-semibold text-slate-900">{{ row.sourceName }}</td><td class="ui-col-frequency px-5 py-4 text-sm text-slate-600">{{ row.freq }}</td><td class="ui-col-number px-5 py-4 text-sm font-semibold text-slate-900">{{ formatNumber(row.total) }}</td><td class="ui-col-number px-5 py-4 text-sm font-semibold text-blue-600">{{ formatNumber(row.new) }}</td><td class="ui-col-number px-5 py-4 text-sm font-semibold text-green-600">{{ formatNumber(row.updated) }}</td><td class="ui-col-datetime px-5 py-4 text-sm text-slate-500">{{ row.lastUpdate }}</td></tr></tbody>
                         </table>
                     </div>
@@ -1537,7 +1539,7 @@
                 <panel title="来源管理">
                     <div class="ui-table-scroll">
                         <table class="ui-table ui-source-table divide-y divide-slate-200">
-                            <thead class="bg-slate-50"><tr><th class="ui-col-name px-5 py-3 text-left text-xs font-medium text-slate-500">来源名称</th><th class="ui-col-status px-5 py-3 text-left text-xs font-medium text-slate-500">对象类型</th><th class="px-5 py-3 text-left text-xs font-medium text-slate-500 min-w-[300px]">覆盖城市</th><th class="ui-col-frequency px-5 py-3 text-left text-xs font-medium text-slate-500">更新频率</th><th class="ui-col-datetime px-5 py-3 text-left text-xs font-medium text-slate-500">最近更新时间</th><th class="ui-col-status px-5 py-3 text-left text-xs font-medium text-slate-500">状态</th></tr></thead>
+                            <thead class="bg-slate-50"><tr><th class="ui-col-name px-5 py-3 text-left text-xs font-medium text-slate-500">来源名称</th><th class="ui-col-status px-5 py-3 text-left text-xs font-medium text-slate-500">对象类型</th><th class="px-5 py-3 text-left text-xs font-medium text-slate-500 min-w-[300px]">覆盖城市</th><th class="ui-col-frequency px-5 py-3 text-left text-xs font-medium text-slate-500">更新方式</th><th class="ui-col-datetime px-5 py-3 text-left text-xs font-medium text-slate-500">最近更新时间</th><th class="ui-col-status px-5 py-3 text-left text-xs font-medium text-slate-500">状态</th></tr></thead>
                             <tbody class="divide-y divide-slate-200 bg-white"><tr v-for="item in accessSourceList" :key="item.id" class="hover:bg-slate-50"><td class="ui-col-name px-5 py-4 text-sm font-medium text-slate-900">{{ item.name }}</td><td class="ui-col-status px-5 py-4 text-sm text-slate-600">{{ item.type }}</td><td class="px-5 py-4 text-sm text-slate-600 min-w-[300px]">{{ item.cities }}</td><td class="ui-col-frequency px-5 py-4 text-sm text-slate-600">{{ item.freq }}</td><td class="ui-col-datetime px-5 py-4 text-sm text-slate-500">{{ item.lastUpdate }}</td><td class="ui-col-status px-5 py-4 text-sm"><span :class="item.status === '启用' ? 'text-green-600' : 'text-slate-400'">{{ item.status }}</span></td></tr></tbody>
                         </table>
                     </div>
@@ -1604,7 +1606,7 @@
                         <div v-if="accessDataTab==='house'" class="ui-table-scroll border border-slate-200 rounded-lg">
                             <table class="ui-table ui-source-object-table divide-y divide-slate-200">
                                 <thead class="bg-slate-50"><tr><th class="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase">来源房源ID</th><th class="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase">数据源名称</th><th class="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase">小区名称</th><th class="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase">关联主小区</th><th class="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase">户型/面积</th><th class="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase">价格</th><th class="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase">首次/最近更新</th><th class="px-4 py-3 text-center text-xs font-medium text-slate-500 uppercase">操作</th></tr></thead>
-                                <tbody class="divide-y divide-slate-200 bg-white"><tr v-for="item in accessActiveDataList" :key="item.id" class="hover:bg-slate-50"><td class="ui-col-id px-4 py-3 text-sm font-mono text-slate-600">{{ item.id }}</td><td class="px-4 py-3 text-sm text-slate-800 whitespace-nowrap">{{ item.sourceName }}</td><td class="px-4 py-3 text-sm font-medium text-slate-900 min-w-[168px]">{{ item.community }}</td><td class="px-4 py-3 text-sm min-w-[180px]"><button v-if="item.masterCommunityId" type="button" @click="openAccessGovernance(item)" class="font-medium text-blue-700 hover:text-blue-900 hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 rounded" :aria-label="`查看${item.masterCommunityName}治理关系`">{{ item.masterCommunityName }}</button><span v-else class="font-medium text-slate-400">{{ item.masterCommunityName || '未关联' }}</span><div v-if="item.masterCommunityId" class="mt-1 text-xs text-slate-400 font-mono">{{ item.masterCommunityId }}</div></td><td class="px-4 py-3 text-sm text-slate-600 whitespace-nowrap">{{ item.layout }} | {{ item.area }}</td><td class="px-4 py-3 text-sm font-semibold text-red-500 whitespace-nowrap">{{ item.price }}</td><td class="ui-col-datetime px-4 py-3 text-xs text-slate-500"><div>首：{{ item.firstTime }}</div><div>更：{{ item.lastTime }}</div></td><td class="ui-col-action px-4 py-3 text-center text-sm font-medium"><button @click="openAccessDetail(item)" class="text-blue-600 hover:text-blue-900">详情</button></td></tr></tbody>
+                                <tbody class="divide-y divide-slate-200 bg-white"><tr v-for="item in accessActiveDataList" :key="item.id" class="hover:bg-slate-50" :data-source-house-row="item.id"><td class="ui-col-id px-4 py-3 text-sm font-mono text-slate-600">{{ item.id }}</td><td class="px-4 py-3 text-sm text-slate-800 whitespace-nowrap">{{ item.sourceName }}</td><td class="px-4 py-3 text-sm font-medium text-slate-900 min-w-[168px]">{{ item.community }}</td><td class="px-4 py-3 text-sm min-w-[180px]"><button v-if="item.masterCommunityId" type="button" @click="openAccessGovernance(item)" class="font-medium text-blue-700 hover:text-blue-900 hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 rounded" :aria-label="`查看${item.masterCommunityName}治理关系`">{{ item.masterCommunityName }}</button><span v-else class="font-medium text-slate-400">{{ item.masterCommunityName || '未关联' }}</span><div v-if="item.masterCommunityId" class="mt-1 text-xs text-slate-400 font-mono">{{ item.masterCommunityId }}</div></td><td class="px-4 py-3 text-sm text-slate-600 whitespace-nowrap">{{ item.layout }} | {{ item.area }}</td><td class="px-4 py-3 text-sm font-semibold text-red-500 whitespace-nowrap">{{ item.price }}</td><td class="ui-col-datetime px-4 py-3 text-xs text-slate-500"><div>首：{{ item.firstTime }}</div><div>更：{{ item.lastTime }}</div></td><td class="ui-col-action px-4 py-3 text-center text-sm font-medium"><button @click="openAccessDetail(item)" class="text-blue-600 hover:text-blue-900">详情</button></td></tr></tbody>
                             </table>
                         </div>
                         <div v-if="accessDataTab==='community'" class="ui-table-scroll border border-slate-200 rounded-lg">
@@ -1683,9 +1685,33 @@
                 </div>
             </section>
 
+
+            <section v-if="currentMenu==='housingUploads'" class="space-y-4" data-upload-module>
+
+              <div class="rounded-xl border border-slate-200 bg-white p-5 shadow-sm"><form @submit.prevent="housingApplyFilters" class="flex flex-wrap items-end gap-3">
+                <label class="text-xs text-slate-500">请求/房源/经纪人<input v-model="housingFiltersDraft.query" class="mt-2 block h-9 w-64 rounded-md border border-slate-300 px-3 text-sm" placeholder="编号、房源ID、小区、经纪人姓名或ID" aria-label="检索房源上传记录"></label>
+                <label class="text-xs text-slate-500">上传入口<select v-model="housingFiltersDraft.entry" class="mt-2 block h-9 rounded-md border border-slate-300 px-3 text-sm" aria-label="上传入口"><option>全部</option><option>企微会话</option><option>APP上传</option><option>C端会话</option></select></label>
+                <label class="text-xs text-slate-500">处理结果<select v-model="housingFiltersDraft.status" class="mt-2 block h-9 rounded-md border border-slate-300 px-3 text-sm" aria-label="上传处理结果"><option>全部</option><option>待处理</option><option>处理中</option><option>已完成</option><option>部分完成</option><option>未完成</option><option>已取消</option></select></label>
+                <label class="text-xs text-slate-500">提交日期<input type="date" v-model="housingFiltersDraft.start" class="mt-2 block h-9 rounded-md border border-slate-300 px-3 text-sm" aria-label="上传开始日期"></label><label class="text-xs text-slate-500">至<input type="date" v-model="housingFiltersDraft.end" class="mt-2 block h-9 rounded-md border border-slate-300 px-3 text-sm" aria-label="上传结束日期"></label>
+                <button class="h-9 rounded-md bg-blue-600 px-4 text-sm font-medium text-white">查询</button><button type="button" @click="housingResetFilters" class="h-9 rounded-md border border-slate-300 px-4 text-sm">重置</button>
+              </form><div v-if="housingRecordKey" class="mt-4 flex items-center gap-3 rounded-md bg-blue-50 p-3 text-xs text-blue-700">当前房源筛选<button @click="housingRecordKey=''" class="font-medium underline">查看全部</button></div></div>
+              <panel title="房源上传记录"><template #action><span class="text-xs text-slate-500">{{currentCity}} · {{housingRequests.length}}条请求</span></template>
+                <div class="overflow-x-auto"><table class="w-full divide-y divide-slate-200 text-sm"><thead class="bg-slate-50"><tr><th v-for="h in ['请求编号 / 提交时间','上传入口','上传人','房源数量','处理结果','操作']" class="whitespace-nowrap px-5 py-3 text-left text-xs font-medium text-slate-500">{{h}}</th></tr></thead><tbody class="divide-y divide-slate-200"><tr v-for="r in housingRequests" :key="r.id" class="hover:bg-slate-50" :data-upload-row="r.id"><td class="px-5 py-4"><button @click="housingOpenRequest(r.id)" class="font-mono text-xs text-blue-700">{{r.id}}</button><span v-if="r.demoSnapshot" class="ml-2 text-xs text-slate-400">示例</span><div class="mt-2 whitespace-nowrap text-xs text-slate-500">{{r.time}}</div></td><td class="px-5 py-4 whitespace-nowrap">{{r.entryLabel}}</td><td class="px-5 py-4" data-upload-submitter><div>{{r.submitter}}</div><div v-if="r.brokerId" class="mt-1 font-mono text-xs text-slate-500">{{r.brokerId}}</div></td><td class="px-5 py-4 whitespace-nowrap" data-upload-quantity><span v-if="r.admissionError" class="text-slate-400">—</span><template v-else><b class="font-medium">共{{r.counts.total}}套</b><div class="mt-1 text-xs text-slate-500">{{r.target?'已发送':'上传成功'}} {{r.counts.done}}<span v-if="r.counts.pending"> · 待完成 {{r.counts.pending}}</span></div><div v-if="r.counts.failed || r.counts.cancelled" class="mt-1 text-xs text-slate-500"><span v-if="r.counts.failed">失败 {{r.counts.failed}}</span><span v-if="r.counts.cancelled">{{r.counts.failed?' · ':''}}已取消 {{r.counts.cancelled}}</span></div></template></td><td class="px-5 py-4"><status-badge :text="r.label"></status-badge><div v-if="r.pendingReason" class="mt-2 max-w-60 text-xs text-amber-700">{{r.pendingReason}}</div></td><td class="px-5 py-4"><button @click="housingOpenRequest(r.id)" class="whitespace-nowrap text-sm text-blue-600">查看明细</button></td></tr></tbody></table><div v-if="!housingRequests.length" class="py-16 text-center text-sm text-slate-400">暂无符合条件的房源上传记录</div></div>
+              </panel>
+            </section>
+            <section v-if="currentMenu==='housingUploadDetail' && housingActiveRequest" class="space-y-4" data-upload-detail>
+              <button @click="goMenu('housingUploads')" class="text-sm text-blue-600">返回房源上传记录</button>
+              <div class="rounded-xl border border-slate-200 bg-white p-5 shadow-sm"><div class="flex items-center justify-between gap-4"><h2 class="text-lg font-semibold">上传请求明细<span v-if="housingActiveRequest.demoSnapshot" class="ml-3 text-xs font-normal text-slate-400">示例记录</span></h2><status-badge :text="housingRequestLabel(housingActiveRequest)"></status-badge></div><dl class="mt-5 grid grid-cols-2 gap-5 text-sm xl:grid-cols-4"><div><dt class="text-xs text-slate-500">请求编号</dt><dd class="mt-2 break-all font-mono text-xs">{{housingActiveRequest.id}}</dd></div><div><dt class="text-xs text-slate-500">提交入口 / 城市</dt><dd class="mt-2">{{housingEntryLabel(housingActiveRequest)}} · {{housingActiveRequest.city || '西安'}}</dd></div><div><dt class="text-xs text-slate-500">上传人</dt><dd class="mt-2" data-upload-submitter-detail>{{housingSubmitter(housingActiveRequest)}}<div v-if="housingActiveRequest.owner" class="mt-1 font-mono text-xs text-slate-500">{{housingActiveRequest.owner}}</div></dd></div><div><dt class="text-xs text-slate-500">提交时间</dt><dd class="mt-2">{{housingActiveRequest.time}}</dd></div><div v-if="housingActiveRequest.target"><dt class="text-xs text-slate-500">接收客户</dt><dd class="mt-2">{{housingActiveRequest.target}}</dd></div></dl><div v-if="housingActiveRequest.admissionError" data-upload-admission-reason class="mt-5 rounded-md bg-amber-50 p-3 text-sm leading-6 text-amber-800">{{housingActiveRequest.admissionError}}</div><details :open="!!housingActiveRequest.admissionError" class="mt-5 border-t border-slate-100 pt-4"><summary class="cursor-pointer text-sm text-blue-600">原始提交消息</summary><pre data-upload-original-message class="mt-3 max-h-48 overflow-auto whitespace-pre-wrap break-all rounded-lg bg-slate-50 p-4 text-xs leading-6">{{housingActiveRequest.text}}</pre></details></div>
+              <div v-if="!housingActiveRequest.admissionError" class="grid grid-cols-2 gap-3 md:grid-cols-5" data-upload-counts><div v-for="metric in housingCountMetrics(housingActiveRequest)" :key="metric.label" class="rounded-xl border border-slate-200 bg-white p-4"><div class="text-xs text-slate-500">{{metric.label}}</div><div class="mt-2 text-xl font-semibold">{{metric.value}}</div><div v-if="metric.hint" class="mt-2 text-xs text-slate-500">{{metric.hint}}</div></div></div>
+                            <panel v-if="!housingActiveRequest.admissionError" title="逐套房源明细"><div class="divide-y divide-slate-200"><section v-for="(i,n) in housingActiveRequest.items" :key="i.key" class="p-5" :data-upload-item="i.key"><div class="flex items-start justify-between gap-5"><div><div class="text-sm font-semibold">{{n+1}}. {{i.source}} · {{i.city || '城市未识别'}} · {{i.sourceId || '链接待补正'}}</div><p v-if="housingItemHouse(i)" class="mt-2 text-sm text-slate-600">{{housingItemHouse(i).title}} · {{housingItemHouse(i).area}}㎡ · {{housingItemHouse(i).price}}万</p><button v-if="i.houseId" @click="housingOpenFact(i.key)" class="mt-2 font-mono text-xs text-blue-600">{{i.houseId}}</button><div v-else class="mt-2 text-xs text-slate-400">尚未形成业务房源</div></div><div class="flex items-center gap-5"><status-badge :text="housingItemLabel(housingActiveRequest,i)"></status-badge><span class="text-xs" :class="i.associationStatus==='associated'?'text-emerald-700':'text-amber-700'">{{housingAssociationLabel(i)}}</span><button v-if="i.houseId" @click="housingOpenFact(i.key,true)" class="text-sm text-blue-600">查看经纪人关联</button></div></div>
+                
+                <div v-if="i.error" class="mt-4 rounded-md bg-amber-50 p-3 text-xs leading-6 text-amber-800">{{i.error}}</div>
+              </section></div></panel>
+
+            </section>
             <section v-if="currentMenu==='standardFacts'" class="space-y-4">
                 <section class="access-filter-panel"><div class="access-filter-grid">
-                    <label class="access-filter-item"><span>来源名称</span><select v-model="factAssetFiltersDraft.source"><option>全部</option><option>贝壳房源</option><option>365房源</option><option>辉达房源</option><option>巧房房源</option></select></label>
+                    <label class="access-filter-item"><span>来源名称</span><select v-model="factAssetFiltersDraft.source"><option>全部</option><option>贝壳房源</option><option>安居客房源</option><option>365房源</option><option>辉达房源</option><option>巧房房源</option></select></label>
                     <label class="access-filter-item"><span>房源ID</span><input v-model="factAssetFiltersDraft.houseId" @keyup.enter="applyFactAssetFilters" placeholder="房源ID"></label>
                     <label class="access-filter-item"><span>房源标题</span><input v-model="factAssetFiltersDraft.title" @keyup.enter="applyFactAssetFilters" placeholder="房源标题"></label>
                     <label class="access-filter-item"><span>主小区名称</span><input v-model="factAssetFiltersDraft.masterCommunityName" @keyup.enter="applyFactAssetFilters" placeholder="主小区名称"></label>
@@ -1698,7 +1724,7 @@
                     <label v-show="factAdvancedFilters" class="access-filter-item"><span>最近更新日期</span><span class="access-filter-range"><input type="date" v-model="factAssetFiltersDraft.updatedStart"><input type="date" v-model="factAssetFiltersDraft.updatedEnd"></span></label>
                     <div class="access-filter-actions"><button @click="applyFactAssetFilters" class="h-9 px-4 bg-blue-600 text-white rounded-md text-sm font-medium hover:bg-blue-700">查询</button><button @click="resetFactAssetFilters" class="h-9 px-3 border border-slate-300 rounded-md text-sm text-slate-700 hover:bg-slate-50">重置</button><button @click="factAdvancedFilters=!factAdvancedFilters" class="access-filter-toggle">{{ factAdvancedFilters ? '收起' : '展开' }}<svg :class="factAdvancedFilters ? 'rotate-180' : ''" class="w-4 h-4 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m6 9 6 6 6-6"></path></svg></button></div>
                 </div></section>
-                <panel title="房源">
+                <panel title="房源"><template #action><button @click="housingRecordKey='';goMenu('housingUploads')" class="px-3 py-2 text-sm text-blue-700 border border-blue-200 bg-blue-50 rounded-lg">房源上传记录</button></template>
                     <div class="overflow-x-auto"><table class="min-w-full divide-y divide-slate-200"><thead class="bg-slate-50"><tr><th v-for="h in ['房源ID','数据源名称','房源标题','关联主小区','户型','建筑面积（㎡）','挂牌总价（万元）','挂牌状态','首次/最近更新','操作']" :key="h" class="px-5 py-3 text-left text-xs font-medium text-slate-500 whitespace-nowrap">{{h}}</th></tr></thead><tbody class="divide-y divide-slate-200"><tr v-for="item in filteredStandardFacts" :key="item.id" class="hover:bg-slate-50"><td class="px-5 py-4"><button @click="openStandardFact(item)" class="font-mono text-sm text-blue-700 hover:text-blue-900">{{item.id}}</button></td><td class="px-5 py-4 text-sm text-slate-800">{{item.source}}</td><td class="px-5 py-4 text-sm font-medium text-slate-900 max-w-[320px]">{{item.title}}</td><td class="px-5 py-4"><button @click="openFactCommunity(item)" class="text-sm text-blue-700 hover:underline">{{item.masterCommunityName}}</button></td><td class="px-5 py-4 text-sm text-slate-600">{{item.layout || '—'}}</td><td class="px-5 py-4 text-sm text-slate-600">{{item.area || '—'}}</td><td class="px-5 py-4 text-sm font-semibold text-red-500">{{item.priceValue ?? '—'}}</td><td class="px-5 py-4"><status-badge :text="item.saleStatus"></status-badge></td><td class="px-5 py-4 text-xs text-slate-500 whitespace-nowrap"><div>首: {{item.firstSeen}}</div><div>更: {{item.updatedAt}}</div></td><td class="px-5 py-4"><button @click="openStandardFact(item)" class="text-sm font-medium text-blue-600">查看数据</button></td></tr></tbody></table></div>
                 </panel>
             </section>
@@ -1724,14 +1750,15 @@
                 <panel v-if="factDetailTab==='relations'" title="来源关系">
                     <div class="divide-y divide-slate-200">
                         <section class="p-5">
-                            <div class="flex items-center justify-between gap-4"><div class="flex items-center gap-3"><h3 class="font-semibold text-slate-900">来源房源</h3><status-badge text="已接入"></status-badge></div><button @click="openSourceHouse(activeStandardFact)" class="text-sm font-medium text-blue-600 hover:text-blue-900">查看来源房源</button></div>
+                            <div class="flex items-center justify-between gap-4"><div class="flex items-center gap-3"><h3 class="font-semibold text-slate-900">来源房源</h3><status-badge text="已接入"></status-badge></div><div class="flex gap-4"><button @click="housingOpenRecords(activeStandardFact)" class="text-sm font-medium text-blue-600 hover:text-blue-900">查看接入处理</button><button @click="openSourceHouse(activeStandardFact)" class="text-sm font-medium text-blue-600 hover:text-blue-900">查看来源房源</button></div></div>
                             <dl class="mt-4 grid grid-cols-1 gap-x-8 gap-y-4 sm:grid-cols-2 xl:grid-cols-3">
                             <div><dt class="text-xs text-slate-500">来源房源 ID</dt><dd class="mt-1 font-mono text-sm text-slate-900">{{activeStandardFact.sourceHouseId}}</dd></div>
                             <div><dt class="text-xs text-slate-500">来源小区 ID</dt><dd class="mt-1 font-mono text-sm text-slate-900">{{activeStandardFact.sourceCommunityId || '未提供'}}</dd></div>
                                 <div><dt class="text-xs text-slate-500">首次接入时间</dt><dd class="mt-1 text-sm text-slate-700">{{activeStandardFact.firstSeen}}</dd></div>
                                 <div><dt class="text-xs text-slate-500">最近更新时间</dt><dd class="mt-1 text-sm text-slate-700">{{activeStandardFact.updatedAt}}</dd></div>
                             </dl>
-                        </section>
+                            
+            </section>
                         <section class="p-5">
                             <div class="flex items-center justify-between gap-4"><div class="flex items-center gap-3"><h3 class="font-semibold text-slate-900">关联主小区</h3><status-badge text="已关联"></status-badge></div><button @click="openFactCommunity(activeStandardFact)" class="text-sm font-medium text-blue-600 hover:text-blue-900">查看主小区</button></div>
                             <dl class="mt-4 grid grid-cols-1 gap-x-8 gap-y-4 sm:grid-cols-2 xl:grid-cols-3">
@@ -1741,6 +1768,7 @@
                         </section>
                     </div>
                 </panel>
+                <panel v-if="factDetailTab==='brokers'" title="经纪人关联" data-broker-relations><template #action><span class="text-xs text-slate-500">有效关联 {{housingBrokerRows.filter(r=>r.active).length}}人 · 已取消 {{housingBrokerRows.filter(r=>!r.active).length}}人</span></template><div class="px-5 py-4"><span class="text-sm text-slate-500">关联及推荐设置来自有客APP后台；按经纪人分别展示，仅只读查询。</span></div><div class="overflow-x-auto"><table class="w-full divide-y divide-slate-200 text-sm"><thead class="bg-slate-50"><tr><th v-for="h in ['经纪人','关联状态','是否推荐','关联时间','关联入口','最近变更时间','来源上传记录']" class="whitespace-nowrap px-5 py-3 text-left text-xs font-medium text-slate-500">{{h}}</th></tr></thead><tbody class="divide-y divide-slate-200"><tr v-for="r in housingBrokerRows" :key="r.brokerId" :data-broker-id="r.brokerId"><td class="px-5 py-4"><b class="font-medium">{{r.name}}</b><div class="mt-1 font-mono text-xs text-slate-500">{{r.brokerId}}</div></td><td class="whitespace-nowrap px-5 py-4"><status-badge :text="r.active?'有效关联':'已取消'"></status-badge></td><td class="whitespace-nowrap px-5 py-4" :data-broker-recommended="r.active && r.recommended?'true':'false'"><span :class="r.active && r.recommended?'bg-orange-50 text-orange-700':'bg-slate-50 text-slate-500'" class="rounded-md px-2 py-1 text-xs">{{r.active && r.recommended?'推荐':'未推荐'}}</span></td><td class="whitespace-nowrap px-5 py-4 text-xs text-slate-500">{{r.associatedAt || '未记录'}}</td><td class="whitespace-nowrap px-5 py-4">{{r.entryLabel}}</td><td class="whitespace-nowrap px-5 py-4 text-xs text-slate-500">{{r.updatedAt || '未记录'}}</td><td class="px-5 py-4"><button v-if="r.requestId" @click="housingOpenRequest(r.requestId)" class="text-xs text-blue-600">查看上传明细</button><span v-else class="text-xs text-slate-400">未记录</span></td></tr></tbody></table><div v-if="!housingBrokerRows.length" class="py-12 text-center text-sm text-slate-400">暂无经纪人关联记录</div></div></panel>
             </section>
 
             <section v-if="currentMenu==='quality'" class="space-y-4">
@@ -2086,7 +2114,7 @@
         leave-from-class="translate-x-0"
         leave-to-class="translate-x-full"
     >
-        <aside v-if="accessDetailVisible" class="fixed inset-y-0 right-0 max-w-3xl w-full bg-white shadow-2xl z-50 flex flex-col overflow-hidden border-l border-slate-200">
+        <aside v-if="accessDetailVisible" data-source-detail class="fixed inset-y-0 right-0 max-w-3xl w-full bg-white shadow-2xl z-50 flex flex-col overflow-hidden border-l border-slate-200">
             <div class="px-6 py-4 border-b border-slate-200 flex items-center justify-between bg-slate-50 shrink-0">
                 <h2 class="text-lg font-semibold text-slate-800">来源对象详情</h2>
                 <div class="flex items-center gap-3"><button v-if="accessSelectedItem?.standardFactId" @click="accessDetailVisible=false; openFactById(accessSelectedItem.standardFactId)" class="px-3 py-2 rounded-md bg-blue-600 text-white text-sm font-medium">标准事实</button><button @click="accessDetailVisible=false" class="text-slate-400 hover:text-slate-600" aria-label="关闭来源对象详情">
@@ -2496,6 +2524,7 @@
             </footer>
         </section>
     </div>
+
 
     <div v-if="toastText" class="fixed bottom-5 right-5 z-[90] bg-slate-900 text-white px-4 py-2 rounded-lg shadow-lg text-sm" aria-live="polite">{{ toastText }}</div>
 </div>
@@ -3273,16 +3302,19 @@ const UNIQUE_HOUSING_RULE_SECTIONS = [
     ]
   }
 ];
-createApp({
+window.housingDataVm = createApp({
     components:{
         'production-rule-block':{
             props:['block'],
             data(){return {expanded:false,overflows:false,observer:null}},
             computed:{
+
+
                 expandable(){return this.block.type==='table' ? this.block.rows.length>4 : this.overflows},
                 shownRows(){return this.expanded ? this.block.rows : this.block.rows.slice(0,4)}
             },
             mounted(){
+
                 if(this.$refs.content && this.block.type!=='table'){
                     const measure=()=>{this.overflows=this.$refs.content.scrollHeight>105};
                     this.$nextTick(measure);
@@ -3329,6 +3361,7 @@ createApp({
     },
     data(){
         return {
+            housingState:window.HousingDemo.get(), housingRecordKey:'', housingRecordQuery:'', housingUnsubscribe:null, housingActiveRequestId:'', housingFilters:{query:'',entry:'全部',status:'全部',start:'',end:''}, housingFiltersDraft:{query:'',entry:'全部',status:'全部',start:'',end:''},
             icons, currentMenu:'accessOverview', activeTabId:'menu:accessOverview', tabOverflowOpen:false, tabHistory:[],
             openedTabs: [{ id:'menu:accessOverview', route:'accessOverview', name:'接入总览', type:'menu', closable:false, state:{} }],
             currentCity:'南京市', cities:['南京市','无锡市','合肥市','苏州市','芜湖市','西安市'], userMenuOpen:false,
@@ -3341,6 +3374,7 @@ createApp({
                     {id:'accessOverview',name:'接入总览',icon:icons.home},
                     {id:'accessSource',name:'来源管理',icon:icons.source},
                     {id:'accessData',name:'来源对象',icon:icons.listing},
+                    {id:'housingUploads',name:'房源上传记录',icon:icons.tasks},
                     {id:'accessRule',name:'接入监控规则',icon:icons.rules},
                     {id:'accessAlarm',name:'告警中心',icon:icons.alert}
                 ]},
@@ -3421,9 +3455,10 @@ createApp({
                 { value:'transaction', label:'成交' },
                 { value:'market', label:'行情' }
             ],
-            accessSourceOptions:['贝壳房源','365房源','辉达房源','巧房房源','贝壳小区','365小区','辉达小区','巧房小区','365楼盘','贝壳楼盘','好好选房成交','贝壳行情'],
+            accessSourceOptions:['安居客房源','贝壳房源','365房源','辉达房源','巧房房源','贝壳小区','365小区','辉达小区','巧房小区','365楼盘','贝壳楼盘','好好选房成交','贝壳行情'],
             accessSourceCityMap:{
-                '贝壳房源':'南京、无锡、合肥、芜湖、苏州',
+                '安居客房源':'西安',
+                '贝壳房源':'南京、无锡、合肥、芜湖、苏州、西安',
                 '365房源':'南京',
                 '辉达房源':'合肥',
                 '巧房房源':'南京',
@@ -3445,7 +3480,8 @@ createApp({
             },
             accessOverviewTableByObject:{
                 house:[
-                    { id: 1, sourceName: '贝壳房源', total: 100, new: 26, updated: 94, freq: '实时同步', lastUpdate: '2026-06-08 10:08:20' },
+                    { id:53,sourceName:'安居客房源',cities:['西安市'],total:50,new:12,updated:10,freq:'按需更新',lastUpdate:'2026-10-23 00:00:00' },
+                    { id: 1, sourceName: '贝壳房源', total: 100, new: 26, updated: 94, freq: '常规任务＋按需更新', lastUpdate: '2026-06-08 10:08:20' },
                     { id: 2, sourceName: '365房源', total: 100, new: 25, updated: 82, freq: '每日更新', lastUpdate: '2026-06-08 10:08:44' },
                     { id: 3, sourceName: '辉达房源', total: 100, new: 24, updated: 79, freq: '实时同步', lastUpdate: '2026-06-08 09:40:56' },
                     { id: 4, sourceName: '巧房房源', total: 100, new: 25, updated: 72, freq: '每日更新', lastUpdate: '2026-06-07 23:18:35' }
@@ -3464,7 +3500,8 @@ createApp({
                 market:[{ id: 11, sourceName: '贝壳行情', total: 811, new: 14, updated: 42, freq: '实时同步', lastUpdate: '2026-05-15 08:00:03' }]
             },
             accessSourceList:[
-                { id: 1, name: '贝壳房源', type: '房源', cities: '南京、无锡、合肥、芜湖、苏州', freq: '实时更新', lastUpdate: '2026-06-08 10:08', status: '启用' },
+                {id:53,name:'安居客房源',type:'房源',cities:'西安',freq:'按需更新',lastUpdate:'2026-10-23 00:00',status:'启用'},
+                { id: 1, name: '贝壳房源', type: '房源', cities: '南京、无锡、合肥、芜湖、苏州、西安', freq: '常规任务＋按需更新', lastUpdate: '2026-06-08 10:08', status: '启用' },
                 { id: 2, name: '365房源', type: '房源', cities: '南京', freq: '每日更新', lastUpdate: '2026-06-08 10:08', status: '启用' },
                 { id: 3, name: '辉达房源', type: '房源', cities: '合肥', freq: '实时更新', lastUpdate: '2026-06-08 09:40', status: '启用' },
                 { id: 4, name: '巧房房源', type: '房源', cities: '南京', freq: '每日更新', lastUpdate: '2026-06-07 23:18', status: '启用' },
@@ -3690,7 +3727,7 @@ createApp({
             mergeStep:1, mergeSourceCommunity:null, mergeBaseCommunity:null, mergeKeyword:'', mergeFieldRows:[], mergeReason:'', mergeConfirmed:false,
             communityMergeSteps:[{id:1,name:'选择保留的基准主小区'},{id:2,name:'核对关系与事实字段'},{id:3,name:'确认合并'}],
             factAssetFilters:{source:'全部',houseId:'',title:'',masterCommunityName:'',district:'',block:'',saleStatus:'全部',layout:'',areaMin:'',areaMax:'',priceMin:'',priceMax:'',updatedStart:'',updatedEnd:''}, factAssetFiltersDraft:{source:'全部',houseId:'',title:'',masterCommunityName:'',district:'',block:'',saleStatus:'全部',layout:'',areaMin:'',areaMax:'',priceMin:'',priceMax:'',updatedStart:'',updatedEnd:''}, factAdvancedFilters:false, activeStandardFact:null, factDetailTab:'facts', factCurrentGroup:'全部', expandedFactField:'', factCorrectionDialog:null, factProvenanceDialog:null, imagePreviewDialog:null, imagePreviewIndex:0, evaluationEvidenceDialog:null, factCorrectionValue:'', factCorrectionNote:'', factFieldDefinitions:{'装修情况':{correctable:true,type:'enum',selectionMode:'single',options:['毛坯','简装','精装','豪华装']},'电梯':{correctable:false,type:'enum',selectionMode:'single',options:['有电梯','无电梯','未知']},'户型特点':{correctable:true,type:'enum',selectionMode:'multiple',options:['带院子','带露台','复式','边户','南北通透','全明']},'建成年代':{correctable:true,type:'text'}}, inferenceFeedbackDialog:null, inferenceFeedbackExpected:'', suggestionDecisionDialog:null, qualityIssueDialog:null, qualitySignalFilters:{strategy:'全部',recordType:'全部'},
-            factDetailTabs:[{id:'facts',name:'当前数据'},{id:'relations',name:'来源关系'}],
+            factDetailTabs:[{id:'facts',name:'当前数据'},{id:'relations',name:'来源关系'},{id:'brokers',name:'经纪人关联'}],
             legacyStandardFacts:[
                 {id:'SHF-NJ-0008821',title:'溪语悦庭 3室2厅 118㎡',source:'贝壳房源',sourceHouseId:'BK-NJ-882190',community:'溪语悦庭',masterCommunityName:'溪语悦庭',communityId:'MC-NJ-10294',district:'建邺区',block:'河西中',layout:'3室2厅2卫',area:'118.20㎡',price:'568万',priceValue:568,saleStatus:'在售',firstSeen:'2026-06-08 09:20',summary:'当前数据覆盖标题、价格、面积、户型、楼层、装修和在售状态等信息',coverage:'96%',issueStatus:'装修情况识别',version:'PROD-20260710.2',updatedAt:'2026-07-10 09:36',fields:[
                     {name:'房源标题',value:'南北通透 精装修 拎包入住',status:'来源采用',sourceType:'贝壳房源',sourceFieldLabel:'房源标题',rawValue:'南北通透 精装修 拎包入住',updatedAt:'2026-07-10 09:36',evidence:[{type:'来源字段',value:'南北通透 精装修 拎包入住',state:'一致',meta:'按来源值直接采用'}]},
@@ -3807,6 +3844,11 @@ createApp({
         }
     },
     computed:{
+
+        housingRequests(){const f=this.housingFilters,q=f.query.trim().toLowerCase(),city=this.currentCity.replace('市','');return this.housingState.tasks.map(t=>{const counts=this.housingRequestCounts(t),success=counts?.done??null,failed=counts?.failed??null;return {...t,counts,success,failed,entryLabel:this.housingEntryLabel(t),label:this.housingRequestLabel(t),submitter:this.housingSubmitter(t),brokerId:t.owner||'',pendingReason:t.admissionError||''}}).filter(r=>(r.city||'西安')===city&&(!this.housingRecordKey||r.items.some(i=>i.key===this.housingRecordKey))&&(f.entry==='全部'||r.entryLabel===f.entry)&&(f.status==='全部'||r.label===f.status)&&(!f.start||r.time.slice(0,10)>=f.start)&&(!f.end||r.time.slice(0,10)<=f.end)&&(!q||[r.id,r.submitter,r.brokerId,...r.items.flatMap(i=>[i.sourceId,i.houseId,this.housingState.houses.find(h=>h.key===i.key)?.community])].some(x=>String(x||'').toLowerCase().includes(q)))).reverse()},
+        housingActiveRequest(){return this.housingState.tasks.find(t=>t.id===this.housingActiveRequestId)},
+        housingBrokerRows(){const h=this.housingState.houses.find(h=>h.id===this.activeStandardFact?.id);if(!h)return [];return Object.entries(this.housingState.relations).filter(([rk])=>rk.endsWith('|'+h.key)).map(([rk,r])=>{const brokerId=rk.slice(0,-h.key.length-1),profile=this.housingState.brokers?.[brokerId];return {...r,brokerId,name:profile?.name||brokerId,entryLabel:({private:'企微上传',app:'APP上传',chat:'客户会话'})[r.entry]||'未记录'}})},
+        housingRows(){const state=this.housingState,query=this.housingRecordQuery.trim(),rows=[];state.tasks.forEach(task=>task.items.forEach((i,index)=>{if(i.city&&i.city!==this.currentCity.replace('市',''))return;if(this.housingRecordKey&&i.key!==this.housingRecordKey)return;rows.push({rowId:task.id+'-'+index,id:task.id,time:task.time,entry:task.entry==='private'?'企微端口 / 客服':'有客APP',action:'按需采集',source:i.source,city:i.city||'未识别',sourceId:i.sourceId||'未识别',domain:i.domain,key:i.key,url:i.url,houseId:i.houseId,status:state.houses.some(h=>h.key===i.key)?'已供消费':i.error?'失败':'处理中',error:i.error,events:i.events||[]})}));state.refreshes.forEach(r=>{const h=state.houses.find(h=>h.key===r.key);if(!h||h.city!==this.currentCity.replace('市','')||this.housingRecordKey&&r.key!==this.housingRecordKey)return;rows.push({rowId:r.id,id:r.id,time:r.time,entry:'有客APP',action:'手动更新',source:h.source,city:h.city,sourceId:h.sourceId,domain:h.domain,key:h.key,houseId:h.id,status:r.status==='processing'?'处理中':r.status==='failed'?'失败':'更新完成',error:r.fail?'本次来源刷新失败':'',events:[{label:'主动刷新受理',time:r.time},...(r.finishedAt?[{label:r.fail?'刷新失败，保留旧数据':'来源及业务房源已更新，供下游消费',time:r.finishedAt}]:[])]})});return rows.reverse().filter(r=>!query||[r.id,r.sourceId].some(x=>x.includes(query)))},
         communityImportStepIndex(){return ({setup:0,preview:1,result:2})[this.communityImportStage] ?? 0},
         communityImportGroups(){return COMMUNITY_FIELD_CATALOG.map(item=>item[0])},
         communityImportTemplateModes(){return [
@@ -3872,6 +3914,7 @@ createApp({
             const active=this.activeWorkspaceTab;
             const pageLabel=this.pageTitle||'当前页面';
             const objectName=(prefix)=>String(active?.name||pageLabel).replace(new RegExp(`^${prefix} ·\\s*`),'')||pageLabel;
+            if(this.currentMenu.startsWith('housingUpload')) return [{label:'数据接入'},{label:'房源上传记录'},...(this.currentMenu==='housingUploadDetail'?[{label:this.housingActiveRequestId}]:[])];
             if(this.currentMenu.startsWith('access')) return [{label:'数据接入'},{label:pageLabel}];
             if(active?.type==='task') return [{label:'对象治理'},{label:'治理任务'},{label:objectName('治理任务')}];
             if(active?.type==='community') return [{label:'业务对象'},{label:'主小区'},{label:objectName('主小区')}];
@@ -3900,12 +3943,13 @@ createApp({
                 accessAlarm:'告警中心',
                 operationLog:'操作记录',
                 userManagement:'用户管理',
-                standardFacts:'房源',standardFactDetail:'房源详情',quality:'生产方案',qualityDetail:'生产方案详情',qualitySignals:'质量问题',strategyTrial:'方案建议评估'
+                housingUploads:'房源上传记录',housingUploadDetail:'上传请求明细',standardFacts:'房源',standardFactDetail:'房源详情',quality:'生产方案',qualityDetail:'生产方案详情',qualitySignals:'质量问题',strategyTrial:'方案建议评估'
             }[this.currentMenu])
         },
         filteredStandardFacts(){
             const f=this.factAssetFilters;
             return this.standardFacts.filter(item=>{
+                if(item.housingDemo&&item.city!==this.currentCity.replace('市',''))return false;
                 const price=Number(item.priceValue || 0);
                 const area=Number.parseFloat(item.area || 0);
                 const updatedDate=String(item.updatedAt || '').slice(0,10);
@@ -4007,10 +4051,10 @@ createApp({
             return this.accessOverviewObjectOptions.find(item=>item.value===this.accessOverviewObjectType)?.label || '房源'
         },
         accessCurrentOverview(){
-            return this.accessOverviewStats[this.accessOverviewObjectType]
+            const stats=this.accessOverviewStats[this.accessOverviewObjectType];if(this.accessOverviewObjectType!=='house')return stats;const rows=this.accessCurrentOverviewTable;return {...stats,total:rows.reduce((n,r)=>n+r.total,0),newToday:rows.reduce((n,r)=>n+r.new,0),updatedToday:rows.reduce((n,r)=>n+r.updated,0),snapshotAt:'2026-10-23 00:00'}
         },
         accessCurrentOverviewTable(){
-            return this.accessOverviewTableByObject[this.accessOverviewObjectType] || []
+            return (this.accessOverviewTableByObject[this.accessOverviewObjectType] || []).filter(row=>!row.cities||row.cities.includes(this.currentCity))
         },
         accessTrendSourceOptions(){
             return ['全部来源',...new Set(this.accessCurrentOverviewTable.map(item=>item.sourceName).filter(Boolean))]
@@ -4047,7 +4091,7 @@ createApp({
                     const firstDate=String(item.firstTime || '').slice(0,10);
                     const masterDistrict=this.masterCommunityLocation(item,'district');
                     const masterBlock=this.masterCommunityLocation(item,'block');
-                    return (filters.sourceName==='全部' || item.sourceName===filters.sourceName) &&
+                    return (!item.housingDemo || String(item.city||'').replace('市','')===this.currentCity.replace('市','')) && (filters.sourceName==='全部' || item.sourceName===filters.sourceName) &&
                         (!filters.sourceHouseId || String(item.id).includes(filters.sourceHouseId)) &&
                         (!filters.title || String(item.title || '').includes(filters.title)) &&
                         (!filters.community || String(item.community || '').includes(filters.community)) &&
@@ -4073,7 +4117,7 @@ createApp({
                     const firstDate=String(item.firstTime || '').slice(0,10);
                     const masterDistrict=this.masterCommunityLocation(item,'district');
                     const masterBlock=this.masterCommunityLocation(item,'block');
-                    return (filters.sourceName==='全部' || item.sourceName===filters.sourceName) &&
+                    return (!item.housingDemo || String(item.city||'').replace('市','')===this.currentCity.replace('市','')) && (filters.sourceName==='全部' || item.sourceName===filters.sourceName) &&
                         (!filters.sourceCommunityId || String(item.id).includes(filters.sourceCommunityId)) &&
                         (!filters.communityName || String(item.communityName || '').includes(filters.communityName)) &&
                         (!filters.districtKeyword || String(item.district || '').includes(filters.districtKeyword)) &&
@@ -4119,6 +4163,7 @@ createApp({
             return [
                 {label:`来源${label}ID`,value:item.id || '--',mono:true},
                 {label:'来源名称',value:item.sourceName || '--'},
+                ...(item.recordType==='house'?[{label:'首次入库触发方式',value:this.ingestTriggerLabel(item.firstIngestTrigger)}]:[]),
                 {label:'首次接入时间',value:item.firstTime || '--'},
                 {label:'最近更新时间',value:item.lastTime || '--'}
             ]
@@ -4127,7 +4172,7 @@ createApp({
             const item=this.accessSelectedItem;
             if(!item) return [];
             const map = {
-                house:[['房源标题','title'],['小区名称','community'],['户型','layout'],['建筑面积','area'],['挂牌时间','listingTime'],['挂牌总价','price'],['挂牌单价','unitPrice'],['在售状态','status'],['朝向','orientation'],['楼层','floor'],['建成年代','buildYear'],['房源描述','description']],
+                house:[['房源标题','title'],['来源小区ID','sourceCommunityId'],['关联主小区ID','masterCommunityId'],['小区名称','community'],['户型','layout'],['建筑面积','area'],['挂牌时间','listingTime'],['挂牌总价','price'],['挂牌单价','unitPrice'],['在售状态','status'],['朝向','orientation'],['楼层','floor'],['建成年代','buildYear'],['房源描述','description']],
                 community:[['小区名称','communityName'],['行政区','district'],['板块','block'],['挂牌均价','avgPrice'],['在售套数','onSaleCount'],['新上套数','newListedCount'],['别名','alias'],['地址','address'],['开发商','developer'],['物业公司','propertyCompany']],
                 project:[['楼盘名称','projectName'],['楼盘别名','alias'],['物业类型','propertyType'],['参考均价','referenceAvgPrice'],['参考总价','referenceTotalPrice'],['行政区','district'],['板块','block'],['楼盘地址','address'],['经度','longitude'],['纬度','latitude'],['销售状态','status'],['开盘时间','openingTime'],['售楼电话','salePhone']],
                 transaction:[['小区名称','communityName'],['成交日期','dealDate'],['成交总价','dealPrice'],['建筑面积','area'],['户型','layout'],['成交单价','unitPrice'],['行政区','district'],['板块','block']],
@@ -4716,6 +4761,38 @@ createApp({
         canExecuteCommunityMerge(){return Boolean(this.mergeBaseCommunity && this.mergeReason.trim() && this.mergeConfirmed)}
     },
 	    methods:{
+        ingestTriggerLabel(value){return value==='link_upload'?'链接上传':'平台任务'},
+        housingEntryLabel(t){return t.entry==='private'?'企微会话':t.target?'C端会话':'APP上传'},
+        housingSubmitter(t){if(!t.owner)return '身份未确认';return this.housingState.brokers?.[t.owner]?.name||String(t.submitterName||'').replace(/[（(]企微联系人[）)]\s*$/,'').trim()||'角色名称未记录'},
+        housingRequestLabel(t){if(t.admissionError)return '未完成';const c=this.housingRequestCounts(t);if(t.status==='cancelled')return '已取消';if(['processing','sending'].includes(t.status))return t.items.every(i=>i.status==='waiting'&&!i.startedAt)?'待处理':'处理中';if(t.status==='partial')return c.done?'部分完成':'未完成';return '已完成'},
+        housingRequestCounts(t){if(t.admissionError)return null;const done=t.items.filter(i=>t.target?['sent','reused'].includes(i.sendStatus):i.status==='ready').length,existing=t.target?0:t.items.filter(i=>i.status==='ready'&&i.resultCode==='already_in_my_houses').length,failed=t.items.filter(i=>i.status==='failed'&&!['sent','reused'].includes(i.sendStatus)).length,remaining=Math.max(0,t.items.length-done-failed);return {total:t.items.length,done,existing,added:done-existing,failed,pending:t.status==='cancelled'?0:remaining,cancelled:t.status==='cancelled'?remaining:0}},
+        housingCountMetrics(t){const c=this.housingRequestCounts(t);if(!c)return [];return [{label:'房源总数',value:c.total},{label:t.target?'已发送':'上传成功',value:c.done,hint:''},{label:'待完成',value:c.pending},{label:'失败',value:c.failed},{label:'已取消',value:c.cancelled}]},
+        housingItemLabel(t,i){if(['sent','reused'].includes(i.sendStatus))return '已发送';if(i.status==='failed')return i.sendStatus==='failed'?'发送失败':i.associationStatus==='failed'?'关联失败':'失败';if(i.status==='ready'&&!t.target)return '上传成功';if(t.status==='cancelled')return '已取消';if(i.sendStatus==='sending')return '发送中';return i.startedAt?'处理中':'待处理'},
+        housingAssociationLabel(i){return i.associationStatus==='associated'?'本人已关联':i.associationStatus==='needs_identity'?'身份未确认':i.associationStatus==='failed'?'关联未成功':i.status==='failed'||this.housingActiveRequest?.status==='cancelled'?'未建立关联':'待关联'},
+        housingItemHouse(i){return this.housingState.houses.find(h=>h.key===i.key)},
+        housingStages(t,i){const rows=window.HousingDemo.stages(t,i,'platform');if(i.sendStatus==='failed'){const card=rows.find(r=>r.label==='转换卡片');if(card)Object.assign(card,{state:'done',text:'卡片已就绪'});}if(i.resultCode==='already_in_my_houses'){const relation=rows.find(r=>r.label==='关联经纪人');if(relation)Object.assign(relation,{state:'done',text:'本人已有，复用成功'});}return rows},
+        housingApplyFilters(){this.housingFilters={...this.housingFiltersDraft}},
+        housingResetFilters(){const f={query:'',entry:'全部',status:'全部',start:'',end:''};this.housingFilters={...f};this.housingFiltersDraft={...f};this.housingRecordKey=''},
+        housingOpenRequest(id){const t=this.housingState.tasks.find(t=>t.id===id);if(!t)return;this.housingActiveRequestId=id;this.openEntityTab('upload','housingUploadDetail',id,'房源上传记录 · '+id,{housingActiveRequestId:id})},
+        housingSync(liveState){
+            const state=window.HousingUploadExamples.merge(liveState);this.housingState=state;
+            const facts=this.standardFacts.filter(x=>!x.housingDemo),sources=this.accessHouseData.filter(x=>!x.housingDemo),sourceCommunities=new Map(),masters=new Map((state.masterCommunities||[]).map(m=>[m.id,{...m,housingDemo:true,sourceCount:0,relation:'已挂接',risk:'无风险',fieldStatus:'正常',reviewStatus:'已有主小区',dataUpdatedAt:'2026-10-23 00:00',lastGovernedAt:''}]));
+            state.houses.forEach(h=>{
+                const ids=window.HousingDemo.communityIds(h.source,h.community),sourceCommunityId=h.sourceCommunityId||ids.sourceCommunityId,masterCommunityId=h.masterCommunityId||ids.masterCommunityId;
+                const fields=[['房源标题',h.title],['所属城市',h.city],['挂牌总价',h.price+'万元'],['建筑面积',h.area+'㎡'],['户型',h.room+'室2厅'],['小区名称',h.community],['挂牌状态',h.status],['365淘房短链',h.shortLink]].map(([name,value])=>({name,value,status:name==='365淘房短链'?'平台加工':'来源采用',sourceType:h.source+'房源',updatedAt:h.updatedAt}));
+                facts.push({housingDemo:true,city:h.city,id:h.id,source:h.source+'房源',sourceHouseId:h.sourceId,sourceCommunityId,title:h.title,community:h.community,masterCommunityName:h.community,communityId:masterCommunityId,relationUpdatedAt:h.relationUpdatedAt||h.updatedAt,district:h.district,block:h.block,layout:h.room+'室2厅',area:h.area+'㎡',price:h.price+'万',priceValue:h.price,saleStatus:h.status,firstSeen:h.collectedAt,updatedAt:h.updatedAt,fields,summary:'本地演示房源，不代表真实采集或挂牌事实'});
+                sources.push({housingDemo:true,id:h.sourceId,recordType:'house',sourceName:h.source+'房源',firstIngestTrigger:h.firstIngestTrigger||'platform_task',sourceCommunityId,masterCommunityId,title:h.title,community:h.community,masterCommunityName:h.community,district:h.district,block:h.block,layout:h.room+'室2厅',area:h.area+'㎡',price:h.price+'万',unitPrice:Math.round(h.price*10000/h.area)+'元/㎡',status:h.status==='下架'?'停售':'在售',firstTime:h.collectedAt,lastTime:h.updatedAt,history:[{time:h.updatedAt,content:'来源房源及业务房源可用；来源小区已走同小区识别并挂接主小区。'}],city:h.city});
+                sourceCommunities.set(sourceCommunityId,{housingDemo:true,id:sourceCommunityId,recordType:'community',sourceName:h.source+'小区',communityName:h.community,city:h.city+'市',district:h.district,block:h.block,masterCommunityId,masterCommunityName:h.community,relationType:'同小区识别自动挂接',relationUpdatedAt:h.relationUpdatedAt||h.updatedAt,firstTime:h.collectedAt,lastTime:h.updatedAt,avgPrice:'--',onSaleCount:'--',history:[{time:h.relationUpdatedAt||h.updatedAt,content:'示例同小区识别结果：已挂接主小区 '+masterCommunityId}]});
+                if(!masters.has(masterCommunityId))masters.set(masterCommunityId,{housingDemo:true,id:masterCommunityId,name:h.community,city:h.city+'市',district:h.district,block:h.block,sourceCount:0,relation:'已挂接',risk:'无风险',fieldStatus:'正常',reviewStatus:'同小区识别自动挂接',dataUpdatedAt:h.updatedAt,lastGovernedAt:h.relationUpdatedAt||h.updatedAt});
+            });
+            for(const m of masters.values())m.sourceCount=[...sourceCommunities.values()].filter(sc=>sc.masterCommunityId===m.id).length;
+            this.standardFacts=facts;this.accessHouseData=sources;
+            this.accessCommunityData=[...this.accessCommunityData.filter(x=>!x.housingDemo),...sourceCommunities.values()];
+            this.communities=[...this.communities.filter(x=>!x.housingDemo),...masters.values()];
+        },
+        housingOpenRecords(fact){this.housingRecordKey=this.housingState.houses.find(h=>h.id===fact.id)?.key||'';this.housingRecordQuery='';this.goMenu('housingUploads')},
+        housingOpenFact(key,brokers=false){const h=this.housingState.houses.find(h=>h.key===key),fact=this.standardFacts.find(f=>f.id===h?.id);if(fact){this.openStandardFact(fact);if(brokers)this.factDetailTab='brokers'}},
+
         openCommunityImport(){
             this.communityImportOpen=true;
             this.communityImportStage='setup';
@@ -5353,7 +5430,7 @@ createApp({
 	            return selected ? 'border-blue-300 bg-blue-50 text-blue-900 font-semibold' : 'border-slate-200 bg-slate-50'
 	        },
         toggleNavGroup(group){this.expandedGroups[group]=!this.expandedGroups[group]},
-        menuTabTitle(route){return ({tasks:'治理任务',masterCommunity:'主小区',rules:'治理规则',audit:'主小区治理记录',accessOverview:'接入总览',accessSource:'来源管理',accessData:'来源对象',accessRule:'接入监控规则',accessAlarm:'告警中心',operationLog:'操作记录',userManagement:'用户管理',standardFacts:'房源',quality:'生产方案',qualityDetail:'生产方案详情',qualitySignals:'质量问题',strategyTrial:'方案建议评估',communityMerge:'合并主小区'})[route]||'页面'},
+        menuTabTitle(route){return ({tasks:'治理任务',masterCommunity:'主小区',rules:'治理规则',audit:'主小区治理记录',accessOverview:'接入总览',accessSource:'来源管理',accessData:'来源对象',accessRule:'接入监控规则',accessAlarm:'告警中心',operationLog:'操作记录',userManagement:'用户管理',housingUploads:'房源上传记录',housingUploadDetail:'上传请求明细',standardFacts:'房源',quality:'生产方案',qualityDetail:'生产方案详情',qualitySignals:'质量问题',strategyTrial:'方案建议评估',communityMerge:'合并主小区'})[route]||'页面'},
         openUserDialog(user=null){
             this.userDialogMode=user?'edit':'create';
             this.editingUserId=user?.id||'';
@@ -5385,6 +5462,7 @@ createApp({
             if(!tab||tab.type==='menu') return;
             if(tab.type==='task') tab.state={activeItem:this.cloneTabValue(this.activeItem),taskDetailTab:this.taskDetailTab,selectedTaskCandidateId:this.selectedTaskCandidateId,communityCompareExpanded:this.communityCompareExpanded};
             if(tab.type==='community') tab.state={activeItem:this.cloneTabValue(this.activeItem),objectListMenu:this.objectListMenu,objectDetailTab:this.objectDetailTab};
+            if(tab.type==='upload') tab.state={housingActiveRequestId:this.housingActiveRequestId};
             if(tab.type==='house') tab.state={activeStandardFact:this.cloneTabValue(this.activeStandardFact),factDetailTab:this.factDetailTab,factCurrentGroup:this.factCurrentGroup,expandedFactField:this.expandedFactField};
         },
         restoreTabState(tab){
@@ -5407,6 +5485,7 @@ createApp({
                 this.objectListMenu=state.objectListMenu||'masterCommunity';
                 this.objectDetailTab=state.objectDetailTab||'facts';
                 this.communityLayoutRoomFilter=state.communityLayoutRoomFilter||'全部';
+            }else if(tab.type==='upload'){this.activeItem=null;this.activeStandardFact=null;this.housingActiveRequestId=state.housingActiveRequestId||tab.entityId;
             }else if(tab.type==='house'){
                 this.activeItem=null;
                 this.activeStandardFact=this.cloneTabValue(state.activeStandardFact);
@@ -5454,7 +5533,7 @@ createApp({
             this.activateTab(id);
             return true;
         },
-        goMenu(menu){this.openMenuTab(menu)},
+        goMenu(menu){if(menu==='housingUploads')this.currentCity='西安市';this.openMenuTab(menu)},
         closeTab(tabId){
             const index=this.openedTabs.findIndex(tab=>tab.id===tabId);
             const tab=this.openedTabs[index];
@@ -5469,7 +5548,7 @@ createApp({
                 this.activateTab(next.id,false);
             }
         },
-        menuActive(menu){const parents={standardFactDetail:'standardFacts',strategyTrial:'standardFacts',qualityDetail:'quality'};return this.currentMenu===menu||parents[this.currentMenu]===menu||((this.currentMenu==='objectDetail'||this.currentMenu==='communityMerge')&&this.objectListMenu===menu)},
+        menuActive(menu){const parents={housingUploadDetail:'housingUploads',standardFactDetail:'standardFacts',strategyTrial:'standardFacts',qualityDetail:'quality'};return this.currentMenu===menu||parents[this.currentMenu]===menu||((this.currentMenu==='objectDetail'||this.currentMenu==='communityMerge')&&this.objectListMenu===menu)},
         buildAccessTrendSeries(){
             const allRows=this.accessCurrentOverviewTable;
             const selectedRows=this.accessTrendSource==='全部来源'
@@ -6337,11 +6416,15 @@ createApp({
         }
     },
     mounted(){
+        this.housingSync(window.HousingDemo.get());
+        this.housingUnsubscribe=window.HousingDemo.subscribe(state=>this.housingSync(state));
+        if(location.hash==='#b-housing'||location.hash==='#housing-uploads'){this.currentCity='西安市';this.goMenu(location.hash==='#housing-uploads'?'housingUploads':'standardFacts');}
         this.applyAccessRuleTypeConfig();
         document.addEventListener('keydown',this.handleGlobalKeydown);
         this.$nextTick(()=>this.renderAccessOverviewChart());
     },
     beforeUnmount(){
+        this.housingUnsubscribe?.();
         document.removeEventListener('keydown',this.handleGlobalKeydown);
         ['_accessOverviewChart'].forEach(key=>{if(this[key]) this[key].destroy()});
     }
