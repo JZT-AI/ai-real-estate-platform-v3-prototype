@@ -31,7 +31,7 @@
     const owner=opt.noIdentity?'':'example-broker-'+(entry==='private'?'zhang':'li'),time=at(8,tasks.length*4%60),items=kinds.map((kind,index)=>({...item(kind),index}));
     const target=opt.chat?'林女士':'',t={id:'EX-UP-'+id,demoSnapshot:true,demoTitle:title,city:'西安',cityId:'610100',owner,recordViewer:owner,submitterName:owner?brokers[owner].name:'企微联系人（身份未确认）',entry,target,status,time,created:Date.parse(time.replace(' ','T')+'+08:00'),session:entry==='private'?'example-wecom-xa':'example-chat-lin',items,sentKeys:items.filter(i=>i.sendStatus==='sent').map(i=>i.key),text:(target?'帮客户看看这些房源：':'请帮忙上传以下房源：')+'\n'+items.map(i=>i.url).join('\n'),...opt};
     if(!['processing','sending'].includes(status))t.finishedAt=at(10,1);
-    items.forEach(i=>{if(i.associationStatus==='associated'&&owner)relations[owner+'|'+i.key]={active:true,recommended:Number(i.sourceId.replace(/\D/g,''))%2===0,associatedAt:i.associatedAt,updatedAt:i.associatedAt,entry:entry==='private'?'private':target?'chat':'app',requestId:t.id};});
+    items.forEach(i=>{if(i.associationStatus==='associated'&&owner)relations[owner+'|'+i.key]={active:true,associatedAt:i.associatedAt,updatedAt:i.associatedAt,entry:entry==='private'?'private':target?'chat':'app',requestId:t.id};});
     tasks.push(t);return t;
   }
   request('001','企微一次上传3套，全部成功','private','completed',['ready','ready','ready']);
