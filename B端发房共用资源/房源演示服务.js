@@ -32,7 +32,7 @@
     // 先校验上传准入，失败仅留原始消息；不解析链接、统计套数或创建逐套处理项。
     const admissionError=entry==='private'?(!opt.recordViewer||opt.registered===false?'仅支持已入驻平台的安家顾问上传，请先核对您的有客账号。':opt.brokerCity&&opt.brokerCity!=='西安'?'您的账号暂未开通房源上传权限，请咨询客服。':opt.serviceConfigured===false||opt.serviceCity&&opt.serviceCity!=='西安'?'请将房源链接发送给指定城市客服。':''):'';
     if(admissionError){const id='UP-'+Date.now().toString(36)+'-'+Math.random().toString(36).slice(2,5);s.tasks.push({id,text,entry,target:'',recordViewer:opt.recordViewer||'',owner:opt.recordViewer||'',city:'西安',cityId:'610100',submitterName:s.brokers[opt.recordViewer]?.name||'身份未确认',created:Date.now(),time:stamp(),finishedAt:stamp(),status:'partial',admissionError,items:[],sentKeys:[],session});save(s);window.HousingDemo.lastCreate={reused:false,id};return id;}
-    let items=opt.keys?opt.keys.map(key=>{const h=s.houses.find(x=>x.key===key);return {...h,url:h?.shortLink||'',status:h&&allowed(s,h)?'waiting':'failed',error:h&&allowed(s,h)?'':'没有使用该房源的权限',duplicates:0}}):parse(text);
+    let items=parse(text);
     if(!items.length)return null;
 
     // 原消息与房源明细沿用现有记录；执行中的来源处理按识别键复用，不新建重复采集任务。
@@ -42,7 +42,7 @@
     const id='UP-'+Date.now().toString(36)+'-'+Math.random().toString(36).slice(2,5);let injectedFailure=false;
     items=items.map((x,i)=>{const producer=!x.error&&prior.find(t=>t.items.some(j=>j.key===x.key&&!j.sharedTaskId&&!j.excluded&&j.status!=='failed'&&j.status!=='ready'));
       const pendingDelivery=matches[i];return {...x,index:i,revision:s.revisions[OWNER+'|'+x.key]||0,sharedTaskId:producer?.id||'',deliveryTaskId:pendingDelivery?.id||'',failOnce:!!(opt.failFirst&&!injectedFailure&&!s.houses.some(h=>h.key===x.key)&&(injectedFailure=true)),events:[{label:x.error?'识别未通过':'识别通过',time:stamp()}]};});
-    const task={id,text,entry,target,recordViewer:opt.recordViewer||'',owner:entry==='private'?(opt.recordViewer||''):OWNER,city:'西安',cityId:'610100',submitterName:s.brokers[entry==='private'?opt.recordViewer:OWNER]?.name||'身份未确认',fromSelection:!!opt.keys,failSourceUpdate:!!opt.failSourceUpdate,failAssociation:!!opt.failAssociation,created:Date.now(),time:stamp(),status:'processing',items,sentKeys:[],session};
+    const task={id,text,entry,target,recordViewer:opt.recordViewer||'',owner:entry==='private'?(opt.recordViewer||''):OWNER,city:'西安',cityId:'610100',submitterName:s.brokers[entry==='private'?opt.recordViewer:OWNER]?.name||'身份未确认',failSourceUpdate:!!opt.failSourceUpdate,failAssociation:!!opt.failAssociation,created:Date.now(),time:stamp(),status:'processing',items,sentKeys:[],session};
     s.tasks.push(task);save(s);window.HousingDemo.lastCreate={reused:false,id};return id;
   }
   function resultFor(item){return {...house(item.source,item.sourceId,item.source==='安居客'?'恒大绿洲':'御锦城',item.source==='安居客'?128:108,3,item.source==='安居客'?106.5:94.06),firstIngestTrigger:'link_upload'};}
@@ -67,7 +67,7 @@
   function step(s,t,item,stage){if(item.status==='failed'||item.status==='ready')return;const labels=['识别通过','来源入库，立即启动业务房源生成及来源小区挂接','业务房源已形成，来源小区已完成同小区识别','主小区关系完成，已供下游消费'];const states=['identified','source','business','ready'];const previous=['waiting','identified','source','business'].indexOf(item.status);const target=Math.min(stage,3);if(target<=previous-1)return;const n=Math.min(previous,3);if(n<0)return;if(n===1&&item.failOnce){item.status='failed';item.error='采集暂时失败（演示异常），可重试';item.events.push({label:item.error,time:stamp()});return}item.status=states[n];if(n===1){item.sourceIngestedAt=stamp();}item.events.push({label:labels[n],time:stamp()});if(n>=1){item.houseId='H-XA-'+item.sourceId;}
     if(n===3){let h=s.houses.find(h=>h.key===item.key);if(!h){h=resultFor(item);h.collectedAt=item.sourceIngestedAt||stamp();h.updatedAt=stamp();h.relationUpdatedAt=h.updatedAt;s.houses.push(h)}h.sourceCheckedAtMs=Date.now();item.sourceCheck='collected';finish(s,t,item,h)}}
   function advance(){const s=get();let changed=false;
-    for(const t of s.tasks){if(!active(t))continue;
+    for(const t of s.tasks){if(t.fromSelection||!active(t))continue;
       const item=t.items.find(i=>!i.excluded&&i.status!=='failed'&&(t.target?!['sent','reused'].includes(i.sendStatus):i.status!=='ready'));
       if(!item){t.status=t.items.some(i=>!i.excluded&&i.status==='failed')?'partial':t.target?'sent':'completed';t.finishedAt=stamp();changed=true;continue;}
       if(!item.startedAt){item.startedAt=Date.now();item.events.push({label:'开始串行处理本套房源',time:stamp()});changed=true;}
