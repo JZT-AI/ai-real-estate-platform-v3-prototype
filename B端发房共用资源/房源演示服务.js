@@ -125,6 +125,24 @@
   
   const sub=f=>{listeners.add(f);return()=>listeners.delete(f)};
   window.addEventListener('storage',e=>{if(e.key===KEY)listeners.forEach(f=>f(get()))});
-  window.HousingDemo={get,save,parse,create,retry,stages,cancel,unlink,refresh,owns,allowed,relation,uploadOrder,communityIds,searchMasterCommunities,subscribe:sub,sample,owner:OWNER,reset:()=>save(seed()),stamp,KEY};
+  // 数据平台的查询视图只接收上传与关系结果，不接收客户或消息投递信息。
+  function platformState(raw=get()){
+    const state={brokers:raw.brokers,masterCommunities:raw.masterCommunities,houses:raw.houses,relations:raw.relations,tasks:[]};
+    for(const t of raw.tasks){
+      if(t.fromSelection||(!t.admissionError&&!t.items.length))continue;
+      const uploadEntry=t.uploadEntry||(t.entry==='private'?'wecom_service':t.target?'app_chat':'app_upload');
+      const items=t.admissionError?[]:t.items.map(i=>{
+        const row={};for(const k of ['key','domain','source','sourceId','city','cityId','url','index','status','associationStatus','associatedAt','readyAt','collected','houseId','shortLink','error','startedAt','sourceCheck'])if(i[k]!==undefined)row[k]=i[k];
+        // 上传的完成事实先于客户发送；后续消息失败不污染后台的上传结果。
+        if(i.associationStatus==='associated'&&i.collected&&i.readyAt){row.status='ready';row.error='';}
+        return row;
+      });
+      const row={};for(const k of ['id','demoSnapshot','demoTitle','city','cityId','owner','recordViewer','submitterName','entry','time','created','finishedAt','admissionError','text'])if(t[k]!==undefined)row[k]=t[k];
+      Object.assign(row,{uploadEntry,items,status:t.admissionError?'partial':t.status==='cancelled'?'cancelled':items.some(i=>!['ready','failed'].includes(i.status))?'processing':items.some(i=>i.status==='failed')?'partial':'completed'});
+      state.tasks.push(row);
+    }
+    return state;
+  }
+  window.HousingDemo={get,save,platformState,parse,create,retry,stages,cancel,unlink,refresh,owns,allowed,relation,uploadOrder,communityIds,searchMasterCommunities,subscribe:sub,sample,owner:OWNER,reset:()=>save(seed()),stamp,KEY};
   setInterval(advance,700);
 })();
