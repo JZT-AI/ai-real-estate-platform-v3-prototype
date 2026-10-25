@@ -98,7 +98,7 @@
         if(!item.sendStarted){item.sendStarted=Date.now();item.sendStatus='sending';changed=true;}
         else if(Date.now()-item.sendStarted>500){const rk=OWNER+'|'+item.key;
           if(t.owner&&(!owns(s,item.key)||(s.revisions[rk]||0)!==item.revision)){item.sendStatus='failed';item.error='房源已从我的房源删除，未发送本套房源';}
-          else if(t.failSend){item.status='failed';item.error='本套消息发送失败，可重试发送';item.sendStatus='failed';}
+          else if(t.failSend){item.status='failed';item.error='本套消息发送失败';item.sendStatus='failed';}
           else{item.sendStatus='sent';item.sentAt=stamp();item.sentAtMs=Date.now();if(!t.sentKeys.includes(item.key))t.sentKeys.push(item.key);item.events.push({label:'本套小程序房源已发送',time:item.sentAt});}changed=true;
         }continue;
       }
@@ -137,7 +137,6 @@
       ...(t.target?[{label:'转换卡片',state:ready?'done':'waiting',text:ready?'卡片已就绪':'待房源可用'},{label:'发送客户',state:sent?'done':i.sendStatus==='failed'?'failed':i.sendStatus==='sending'?'running':'waiting',text:sent?(i.deliveryReused?'原会话已发送':'已发送'):i.sendStatus==='failed'?'发送失败':i.sendStatus==='sending'?'发送中':'等待本套完成'}]:[])
     ];
   }
-  function retrySend(id,key){const s=get(),t=s.tasks.find(t=>t.id===id),i=t?.items.find(i=>i.key===key);if(!i||i.sendStatus!=='failed'||!i.readyAt||i.associationStatus!=='associated')return;i.status='ready';i.error='';i.sendStatus='';i.sendStarted=0;t.failSend=false;t.status='processing';delete t.finishedAt;save(s);}
   function cancel(id){const s=get(),t=s.tasks.find(t=>t.id===id);if(t&&!['sent','completed'].includes(t.status)){t.status='cancelled';save(s)}}
   function unlink(key){const s=get(),r=relation(s,key);if(r){r.active=false;r.updatedAt=stamp();r.cancelledAt=r.updatedAt;}s.revisions[OWNER+'|'+key]=(s.revisions[OWNER+'|'+key]||0)+1;save(s)}
   function refresh(key,fail=false){const s=get();if(!owns(s,key))return null;const existing=s.refreshes.find(r=>r.key===key&&r.status==='processing');if(existing)return existing.id;const id='REF-'+Date.now().toString(36);s.refreshes.push({id,key,status:'processing',created:Date.now(),time:stamp(),fail});save(s);return id}
@@ -162,7 +161,7 @@
     }
     return state;
   }
-  window.HousingDemo={get,save,platformState,parse,recognitionRules,matchesUploadRule,create,retrySend,stages,cancel,unlink,refresh,owns,allowed,relation,uploadOrder,communityIds,searchMasterCommunities,subscribe:sub,sample,owner:OWNER,reset:()=>save(seed()),stamp,KEY};
+  window.HousingDemo={get,save,platformState,parse,recognitionRules,matchesUploadRule,create,stages,cancel,unlink,refresh,owns,allowed,relation,uploadOrder,communityIds,searchMasterCommunities,subscribe:sub,sample,owner:OWNER,reset:()=>save(seed()),stamp,KEY};
   setInterval(advance,700);
 })();
 
