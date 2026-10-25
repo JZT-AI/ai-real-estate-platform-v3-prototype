@@ -35,8 +35,8 @@
   request('001','企微一次上传3套，全部成功','private','completed',['ready','ready','ready']);
   request('002','APP一次上传2套，全部成功','app','completed',['ready','ready']);
   request('003','客户会话3套上传成功','app','completed',['ready','ready','ready'],{chat:true});
-  request('004','10套已受理，等待开始串行处理','app','processing',Array(10).fill('waiting'));
-  request('005','10套串行：第1套上传成功，第2套处理中，其余等待','app','processing',['ready','processing',...Array(8).fill('waiting')],{chat:true,duplicateSubmissions:1});
+  request('004','10套已受理，等待开始处理','app','processing',Array(10).fill('waiting'));
+  request('005','10套同时准备：第1套上传成功，其余处理中','app','processing',['ready',...Array(9).fill('processing')],{chat:true,duplicateSubmissions:1});
   request('006','企微3套：1套成功、1套处理中、1套等待','private','processing',['ready','processing','waiting']);
   request('007','APP5套：成功3套、失效/采集失败各1套','app','partial',['ready','ready','expired','duplicate','collection-failed']);
   request('008','会话4套：3套上传成功、1套采集失败','app','partial',['ready','ready','collection-failed','ready'],{chat:true});

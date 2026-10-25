@@ -77,13 +77,14 @@
     }
     h.lakehouseReady=true;item.status='ready';item.readyAt=stamp();item.events.push({label:t.target?'本套已就绪，等待发送':'本套收录并关联完成，可通知经纪人',time:stamp()});
   }
-  function step(s,t,item,stage){if(item.status==='failed'||item.status==='ready')return;const labels=['识别通过','来源入库，立即启动业务房源生成及来源小区挂接','业务房源实体已形成','湖仓已有房源数据，下游可消费；小区治理独立推进'];const states=['identified','source','business','ready'];const previous=['waiting','identified','source','business'].indexOf(item.status);const target=Math.min(stage,3);if(target<=previous-1)return;const n=Math.min(previous,3);if(n<0)return;if(n===1&&item.failOnce){item.status='failed';item.error='采集暂时失败（演示异常），可重试';item.events.push({label:item.error,time:stamp()});return}item.status=states[n];if(n===1){item.sourceIngestedAt=stamp();}item.events.push({label:labels[n],time:stamp()});if(n>=1){item.houseId='H-XA-'+item.sourceId;}
-    if(n===3){let h=s.houses.find(h=>h.key===item.key);if(!h){h=resultFor(item);if(t.deferCommunity){h.masterCommunityId='';h.sourceCommunityId='';h.communityStatus='pending';delete h.shortLink;}h.collectedAt=item.sourceIngestedAt||stamp();h.updatedAt=stamp();h.relationUpdatedAt=h.updatedAt;s.houses.push(h)}h.sourceCheckedAtMs=Date.now();item.sourceCheck='collected';finish(s,t,item,h)}}
+  function step(s,t,item,stage){if(item.status==='failed'||item.status==='ready')return;const labels=['识别通过','来源入库，立即启动业务房源生成及来源小区挂接','业务房源实体已形成','湖仓已有房源数据，下游可消费；小区治理独立推进'];const states=['identified','source','business','ready'];const previous=['waiting','identified','source','business'].indexOf(item.status);const target=Math.min(stage,3);if(target<=previous-1)return;const n=Math.min(previous,3);if(n<0)return;if(n===1&&item.failOnce){item.status='failed';item.error='采集暂时失败（演示异常），可重试';item.events.push({label:item.error,time:stamp()});return}item.status=states[n];if(n===1){item.sourceIngestedAt=stamp();item.sourceCommunityLinkedAt=stamp();item.communityRecognitionStartedAt=stamp();}item.events.push({label:labels[n],time:stamp()});if(n>=1){item.houseId='H-XA-'+item.sourceId;}
+    if(n===3){let h=s.houses.find(h=>h.key===item.key);if(!h){h=resultFor(item);if(t.deferCommunity){h.masterCommunityId='';h.communityStatus='pending';delete h.shortLink;}h.collectedAt=item.sourceIngestedAt||stamp();h.updatedAt=stamp();h.relationUpdatedAt=h.updatedAt;s.houses.push(h)}h.sourceCheckedAtMs=Date.now();item.sourceCheck='collected';finish(s,t,item,h)}}
   function advance(){const s=get();let changed=false;
     for(const t of s.tasks){if(t.demoSnapshot||t.fromSelection||!active(t))continue;
-      const item=t.items.find(i=>!i.excluded&&i.status!=='failed'&&(t.target?!['sent','reused'].includes(i.sendStatus):i.status!=='ready'));
-      if(!item){t.status=t.items.some(i=>i.status==='cancelled')?'cancelled':t.items.some(i=>!i.excluded&&i.status==='failed')?'partial':t.target?'sent':'completed';t.finishedAt=stamp();changed=true;continue;}
-      if(!item.startedAt){item.startedAt=Date.now();item.events.push({label:'开始串行处理本套房源',time:stamp()});changed=true;}
+      const pending=t.items.filter(i=>!i.excluded&&!['failed','cancelled'].includes(i.status)&&(t.target?!['sent','reused','failed'].includes(i.sendStatus):i.status!=='ready'));
+      if(!pending.length){t.status=t.items.some(i=>i.status==='cancelled')?'cancelled':t.items.some(i=>!i.excluded&&i.status==='failed')?'partial':t.target?'sent':'completed';t.finishedAt=stamp();changed=true;continue;}
+      for(const item of pending){
+      if(!item.startedAt){item.startedAt=Date.now();item.events.push({label:'开始处理本套房源',time:stamp()});changed=true;}
       if(item.deliveryTaskId){const original=s.tasks.find(x=>x.id===item.deliveryTaskId),ref=original?.items.find(x=>x.key===item.key);
         if(ref&&['sent','reused'].includes(ref.sendStatus)){const h=s.houses.find(h=>h.key===item.key);if(h)finish(s,t,item,h,true);item.sendStatus='reused';item.deliveryReused=true;item.sentAt=ref.sentAt;item.events.push({label:'原会话已发送，本次重复项不再发送',time:stamp()});changed=true;continue;}
         if(ref?.status==='failed'||original?.status==='cancelled'){item.status='failed';item.error='原处理中房源未完成，可重试该项';changed=true;continue;}
@@ -91,6 +92,7 @@
         if(ref){item.reusingPending=true;item.sharedStage=ref.status;changed=true;continue;}
       }
       if(item.status==='ready'&&t.target){
+        if(t.items.slice(0,t.items.indexOf(item)).some(i=>!i.excluded&&!['failed','cancelled'].includes(i.status)&&!['sent','reused','failed'].includes(i.sendStatus)))continue;
         if(!item.sendStarted){item.sendStarted=Date.now();item.sendStatus='sending';changed=true;}
         else if(Date.now()-item.sendStarted>500){const rk=OWNER+'|'+item.key;
           if(t.owner&&(!owns(s,item.key)||(s.revisions[rk]||0)!==item.revision)){item.sendStatus='failed';item.error='房源已从我的房源删除，未发送本套房源';}
@@ -116,6 +118,7 @@
         finish(s,t,item,existing,true);changed=true;continue;
       }
       const n=Math.floor((Date.now()-item.startedAt)/850);step(s,t,item,n);changed=true;
+      }
     }
     for(const r of s.refreshes){if(r.status!=='processing'||Date.now()-r.created<1600)continue;const h=s.houses.find(x=>x.key===r.key);r.status=r.fail?'failed':'completed';r.finishedAt=stamp();if(h&&!r.fail){h.price+=2;h.updatedAt=stamp();h.lastRefresh=r.finishedAt;h.sourceCheckedAtMs=Date.now()}changed=true;}
     if(changed)save(s);
