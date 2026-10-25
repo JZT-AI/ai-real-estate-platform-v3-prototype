@@ -16,7 +16,7 @@
   function searchMasterCommunities(keyword,cityId='610100'){const q=String(keyword||'').trim().toLowerCase();return q?get().masterCommunities.filter(c=>c.cityId===cityId&&!c.mergedInto&&[c.name,...(c.aliases||[])].some(v=>String(v).toLowerCase().includes(q))).sort((a,b)=>Number(b.name===q)-Number(a.name===q)||a.name.localeCompare(b.name,'zh-CN')).slice(0,10):[];}
   function house(source,id,community,price,room,area,owner=false){const city='西安',cityId='610100',domain=source==='贝壳'?'ke.com':'anjuke.com',key=[domain,cityId,id].join('|');return {key,domain,source,city,cityId,sourceId:id,id:'H-XA-'+id,community,...communityIds(source,community),firstIngestTrigger:'platform_task',title:community+' '+room+'室 南北通透',price,room,area,bath:2,channel:'第三方',district:'浐灞国际港',block:'浐河西路',status:'上架',updatedAt:'2026-10-22 09:20:00',collectedAt:'2026-10-22 09:20:00',shortLink:'https://m.house365.com/house/H-XA-'+id,owner};}
   function seed(){const h1=house('贝壳','101140402577','御锦城',108,3,94.06),h2=house('安居客','S4624826410476559','保利心语花园',156,3,112),h3=house('贝壳','101139343423','金地湖城大境',218,4,136),h4=house('安居客','S8624826410476521','龙湖香醍国际',188,3,128);h4.otherOnly=true;return {version:2,masterCommunities:masterCommunitySeed(),brokers:{[OWNER]:{id:OWNER,name:'张经理',city:'西安'},'broker-demo-2':{id:'broker-demo-2',name:'李经理',city:'西安'}},houses:[h1,h2,h3,h4],relations:{[OWNER+'|'+h1.key]:{active:true,associatedAt:'2026-10-22 09:20:00',updatedAt:'2026-10-22 09:20:00',entry:'app'},[OWNER+'|'+h2.key]:{active:true,associatedAt:'2026-10-22 09:20:00',updatedAt:'2026-10-22 09:20:00',entry:'chat'},['broker-demo-2|'+h1.key]:{active:true,associatedAt:'2026-10-22 09:22:00',updatedAt:'2026-10-22 09:22:00',entry:'private'}},revisions:{},tasks:[],refreshes:[]};}
-  function get(){try{const s=JSON.parse(localStorage.getItem(KEY))||seed();let changed=false;if(!s.masterCommunities){s.masterCommunities=masterCommunitySeed();changed=true;}for(const r of Object.values(s.relations)){if(Object.hasOwn(r,'recommended')){delete r.recommended;changed=true;}}for(const h of s.houses){if(!h.firstIngestTrigger){h.firstIngestTrigger='platform_task';changed=true;}const ids=communityIds(h.source,h.community);for(const k of ['sourceCommunityId','masterCommunityId'])if(!Object.hasOwn(h,k)){h[k]=ids[k];changed=true;}}const priorTasks=s.tasks.length;s.tasks=s.tasks.filter(t=>{if(t.admissionCode==='SERVICE_NOT_DESIGNATED'||['SERVICE_NOT_DESIGNATED','LINK_INCOMPLETE','SOURCE_NOT_SUPPORTED','LINK_NOT_DETAIL','HOUSE_CITY_NOT_ENABLED','RELATION_REMOVED'].includes(t.demoCase))return false;if(t.fromSelection)return true;if(!matchesUploadRule(t.text))return false;if(!t.admissionError){const len=t.items.length;t.items=t.items.filter(i=>!!matchSupportedUrl({url:i.url,position:0}));if(t.items.length!==len)changed=true;return t.items.length>0;}return true;});if(priorTasks!==s.tasks.length)changed=true;for(const t of s.tasks){if(t.admissionError){const message=t.admissionError.replace(/西安安家顾问/g,'安家顾问').replace('当前仅支持西安站点安家顾问上传。','您的账号暂未开通房源上传权限，请咨询客服。').replace('接口指定的西安城市客服','指定城市客服');if(t.items.length||t.admissionError!==message){t.items=[];t.sentKeys=[];t.admissionError=message;changed=true;}continue;}if(t.target)continue;let migrated=false;for(const i of t.items){if(i.status==='failed'&&i.failureCode==='already_in_my_houses'){i.status='ready';i.resultCode='already_in_my_houses';i.error='';delete i.failureCode;i.reusedRelation=true;i.collected=true;i.readyAt=t.finishedAt||t.time;migrated=changed=true;}}if(migrated&&t.status!=='cancelled'&&!active(t)){t.status=t.items.some(i=>i.status==='failed')?'partial':'completed';}}if(changed){s.version=3;localStorage.setItem(KEY,JSON.stringify(s));}return s;}catch{return seed()}}
+  function get(){try{const s=JSON.parse(localStorage.getItem(KEY))||seed();let changed=false;if(!s.masterCommunities){s.masterCommunities=masterCommunitySeed();changed=true;}for(const r of Object.values(s.relations)){if(Object.hasOwn(r,'recommended')){delete r.recommended;changed=true;}}for(const h of s.houses){if(!h.firstIngestTrigger){h.firstIngestTrigger='platform_task';changed=true;}const ids=communityIds(h.source,h.community);for(const k of ['sourceCommunityId','masterCommunityId'])if(!Object.hasOwn(h,k)){h[k]=ids[k];changed=true;}}const priorTasks=s.tasks.length;s.tasks=s.tasks.filter(t=>{if(t.status==='cancelled')return false;if(t.admissionCode==='SERVICE_NOT_DESIGNATED'||['SERVICE_NOT_DESIGNATED','LINK_INCOMPLETE','SOURCE_NOT_SUPPORTED','LINK_NOT_DETAIL','HOUSE_CITY_NOT_ENABLED','RELATION_REMOVED'].includes(t.demoCase))return false;if(t.fromSelection)return true;if(!matchesUploadRule(t.text))return false;if(!t.admissionError){const len=t.items.length;t.items=t.items.filter(i=>!!matchSupportedUrl({url:i.url,position:0}));if(t.items.length!==len)changed=true;return t.items.length>0;}return true;});if(priorTasks!==s.tasks.length)changed=true;for(const t of s.tasks){for(const i of t.items){if(i.status==='cancelled'){i.status='failed';i.associationStatus='failed';i.failureCode='BROKER_ASSOCIATION_FAILED';i.error='本人房源关系已删除，未重新加入我的房源';delete i.excluded;changed=true;}}if(t.admissionError){const message=t.admissionError.replace(/西安安家顾问/g,'安家顾问').replace('当前仅支持西安站点安家顾问上传。','您的账号暂未开通房源上传权限，请咨询客服。').replace('接口指定的西安城市客服','指定城市客服');if(t.items.length||t.admissionError!==message){t.items=[];t.sentKeys=[];t.admissionError=message;changed=true;}continue;}if(t.target)continue;let migrated=false;for(const i of t.items){if(i.status==='failed'&&i.failureCode==='already_in_my_houses'){i.status='ready';i.resultCode='already_in_my_houses';i.error='';delete i.failureCode;i.reusedRelation=true;i.collected=true;i.readyAt=t.finishedAt||t.time;migrated=changed=true;}}if(migrated&&!active(t)){t.status=t.items.some(i=>i.status==='failed')?'partial':'completed';}}if(changed){s.version=3;localStorage.setItem(KEY,JSON.stringify(s));}return s;}catch{return seed()}}
   function save(s){try{localStorage.setItem(KEY,JSON.stringify(s))}catch{}listeners.forEach(f=>f(s));window.dispatchEvent(new CustomEvent('housing-demo-change',{detail:s}));return s;}
   if(!localStorage.getItem(KEY))save(seed());
   // Data-platform whitelist shared by entry recognition and accepted-request parsing.
@@ -68,7 +68,7 @@
     if(h.status==='下架'){item.status='failed';item.error='来源房源已失效，暂不可用';item.associationStatus='not_started';return;}
     if(t.entry==='private'&&!t.owner){item.status='failed';item.associationStatus='needs_identity';item.error='房源已收录，尚未确认您的有客账号，未完成上传';item.events.push({label:item.error,time:stamp()});return;}
     if(t.owner){const rk=t.owner+'|'+item.key;
-      if((s.revisions[rk]||0)!==item.revision){item.status='cancelled';item.excluded=true;item.error='已取消';return;}
+      if((s.revisions[rk]||0)!==item.revision){item.status='failed';item.associationStatus='failed';item.failureCode='BROKER_ASSOCIATION_FAILED';item.error='本人房源关系已删除，未重新加入我的房源';item.events.push({label:item.error,time:stamp()});return;}
       const old=s.relations[rk];
       if(t.failAssociation){item.status='failed';item.associationStatus='failed';item.error='房源数据已就绪，目标B端账号的本人房源关系写入失败';item.events.push({label:item.error,time:stamp()});return;}
       item.reusedRelation=!!old?.active;const now=stamp();
@@ -83,18 +83,18 @@
     if(n===3){let h=s.houses.find(h=>h.key===item.key);if(!h){h=resultFor(item);if(t.deferCommunity){h.masterCommunityId='';h.communityStatus='pending';delete h.shortLink;}h.collectedAt=item.sourceIngestedAt||stamp();h.updatedAt=stamp();h.relationUpdatedAt=h.updatedAt;s.houses.push(h)}h.sourceCheckedAtMs=Date.now();item.sourceCheck='collected';finish(s,t,item,h)}}
   function advance(){const s=get();let changed=false;
     for(const t of s.tasks){if(t.demoSnapshot||t.fromSelection||!active(t))continue;
-      const pending=t.items.filter(i=>!i.excluded&&!['failed','cancelled'].includes(i.status)&&(t.target?!['sent','reused','failed'].includes(i.sendStatus):i.status!=='ready'));
-      if(!pending.length){t.status=t.items.some(i=>i.status==='cancelled')?'cancelled':t.items.some(i=>!i.excluded&&i.status==='failed')?'partial':t.target?'sent':'completed';t.finishedAt=stamp();changed=true;continue;}
+      const pending=t.items.filter(i=>!i.excluded&&i.status!=='failed'&&(t.target?!['sent','reused','failed'].includes(i.sendStatus):i.status!=='ready'));
+      if(!pending.length){t.status=t.items.some(i=>!i.excluded&&i.status==='failed')?'partial':t.target?'sent':'completed';t.finishedAt=stamp();changed=true;continue;}
       for(const item of pending){
       if(!item.startedAt){item.startedAt=Date.now();item.events.push({label:'开始处理本套房源',time:stamp()});changed=true;}
       if(item.deliveryTaskId){const original=s.tasks.find(x=>x.id===item.deliveryTaskId),ref=original?.items.find(x=>x.key===item.key);
         if(ref&&['sent','reused'].includes(ref.sendStatus)){const h=s.houses.find(h=>h.key===item.key);if(h)finish(s,t,item,h,true);item.sendStatus='reused';item.deliveryReused=true;item.sentAt=ref.sentAt;item.events.push({label:'原会话已发送，本次重复项不再发送',time:stamp()});changed=true;continue;}
-        if(ref?.status==='failed'||original?.status==='cancelled'){item.status='failed';item.error='原处理中房源未完成';changed=true;continue;}
+        if(ref?.status==='failed'){item.status='failed';item.error='原处理中房源未完成';changed=true;continue;}
         // 复用原发送，不新增另一份投递；界面仍展示同一套阶段。
         if(ref){item.reusingPending=true;item.sharedStage=ref.status;changed=true;continue;}
       }
       if(item.status==='ready'&&t.target){
-        if(t.items.slice(0,t.items.indexOf(item)).some(i=>!i.excluded&&!['failed','cancelled'].includes(i.status)&&!['sent','reused','failed'].includes(i.sendStatus)))continue;
+        if(t.items.slice(0,t.items.indexOf(item)).some(i=>!i.excluded&&i.status!=='failed'&&!['sent','reused','failed'].includes(i.sendStatus)))continue;
         if(!item.sendStarted){item.sendStarted=Date.now();item.sendStatus='sending';changed=true;}
         else if(Date.now()-item.sendStarted>500){const rk=OWNER+'|'+item.key;
           if(t.owner&&(!owns(s,item.key)||(s.revisions[rk]||0)!==item.revision)){item.sendStatus='failed';item.error='房源已从我的房源删除，未发送本套房源';}
@@ -137,7 +137,6 @@
       ...(t.target?[{label:'转换卡片',state:ready?'done':'waiting',text:ready?'卡片已就绪':'待房源可用'},{label:'发送客户',state:sent?'done':i.sendStatus==='failed'?'failed':i.sendStatus==='sending'?'running':'waiting',text:sent?(i.deliveryReused?'原会话已发送':'已发送'):i.sendStatus==='failed'?'发送失败':i.sendStatus==='sending'?'发送中':'等待本套完成'}]:[])
     ];
   }
-  function cancel(id){const s=get(),t=s.tasks.find(t=>t.id===id);if(t&&!['sent','completed'].includes(t.status)){t.status='cancelled';save(s)}}
   function unlink(key){const s=get(),r=relation(s,key);if(r){r.active=false;r.updatedAt=stamp();r.cancelledAt=r.updatedAt;}s.revisions[OWNER+'|'+key]=(s.revisions[OWNER+'|'+key]||0)+1;save(s)}
   function refresh(key,fail=false){const s=get();if(!owns(s,key))return null;const existing=s.refreshes.find(r=>r.key===key&&r.status==='processing');if(existing)return existing.id;const id='REF-'+Date.now().toString(36);s.refreshes.push({id,key,status:'processing',created:Date.now(),time:stamp(),fail});save(s);return id}
   
@@ -156,12 +155,12 @@
         return row;
       });
       const row={};for(const k of ['id','demoSnapshot','demoTitle','city','cityId','owner','recordViewer','submitterName','entry','time','created','finishedAt','admissionError','text'])if(t[k]!==undefined)row[k]=t[k];
-      Object.assign(row,{uploadEntry,items,status:t.admissionError?'partial':t.status==='cancelled'?'cancelled':items.some(i=>!['ready','failed'].includes(i.status))?'processing':items.some(i=>i.status==='failed')?'partial':'completed'});
+      Object.assign(row,{uploadEntry,items,status:t.admissionError?'partial':items.some(i=>!['ready','failed'].includes(i.status))?'processing':items.some(i=>i.status==='failed')?'partial':'completed'});
       state.tasks.push(row);
     }
     return state;
   }
-  window.HousingDemo={get,save,platformState,parse,recognitionRules,matchesUploadRule,create,stages,cancel,unlink,refresh,owns,allowed,relation,uploadOrder,communityIds,searchMasterCommunities,subscribe:sub,sample,owner:OWNER,reset:()=>save(seed()),stamp,KEY};
+  window.HousingDemo={get,save,platformState,parse,recognitionRules,matchesUploadRule,create,stages,unlink,refresh,owns,allowed,relation,uploadOrder,communityIds,searchMasterCommunities,subscribe:sub,sample,owner:OWNER,reset:()=>save(seed()),stamp,KEY};
   setInterval(advance,700);
 })();
 
@@ -188,8 +187,7 @@
  H.uploadReply=(record,state=H.get())=>{
   if(record.admissionError)return '本次上传未受理：'+record.admissionError;
   const good=record.items.filter(i=>i.status==='ready'),bad=record.items.filter(i=>i.status==='failed'),lines=[];
-  if(record.status==='cancelled')lines.push('本次上传已取消，已上传成功'+good.length+'套，其余已停止。');
-  else if(bad.length)lines.push(good.length?'本次上传部分完成：成功'+good.length+'套，失败'+bad.length+'套。':'本次上传失败，共'+bad.length+'套。');
+  if(bad.length)lines.push(good.length?'本次上传部分完成：成功'+good.length+'套，失败'+bad.length+'套。':'本次上传失败，共'+bad.length+'套。');
   else lines.push('本次上传完成，成功'+good.length+'套。');
   if(good.length){lines.push(good.map((i,n)=>{const h=state.houses.find(x=>x.key===i.key);return (n+1)+'. '+(h?h.title+' · '+h.area+'㎡ · '+h.price+'万':'房源 '+i.sourceId)}).join('\n'));lines.push('可前往365有客APP“房源管理→我的房源”查看。');}
   if(bad.length)lines.push('未上传成功：\n'+bad.map((i,n)=>{const h=state.houses.find(x=>x.key===i.key);return (n+1)+'. '+i.url+'\n'+(i.brokerReason||H.failureFor(i).reason)}).join('\n'));

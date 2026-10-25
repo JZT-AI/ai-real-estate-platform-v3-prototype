@@ -42,8 +42,6 @@
   request('008','会话4套：3套上传成功、1套采集失败','app','partial',['ready','ready','collection-failed','ready'],{chat:true});
   request('009','身份未通过，仅保留原始提交消息','private','partial',[],{noIdentity:true,admissionCode:'UPLOAD_IDENTITY_INELIGIBLE',admissionError:'当前账号不符合传房条件，请确认使用已入驻平台的安家顾问账号，或咨询客服。',text:'您好，请帮忙上传房源：\n'+window.HousingDemo.sample.bk+'\n'+window.HousingDemo.sample.ajk});
   request('010','APP3套全部未完成，失败原因分别展示','app','partial',['collection-failed','association-failed','expired']);
-  request('011','会话4套处理中取消，保留上传成功的第1套','app','cancelled',['ready','waiting','waiting','waiting'],{chat:true});
-  request('012','独立上传2套尚未执行，已取消','app','cancelled',['waiting','waiting']);
   request('013','企微再次上传2套，均上传成功','private','completed',['duplicate','duplicate']);
   for(const scenario of window.HousingDemo.failureCases){const f=window.HousingDemo.scenarioSnapshot(scenario.code,'private',{id:'EX-FAIL-'+scenario.code});tasks.push(f.task);houses.push(...f.houses);Object.assign(relations,f.relations);Object.assign(brokers,f.brokers);}
   const mixed=window.HousingDemo.scenarioSnapshot('MIXED','private',{id:'EX-MIXED-RESULT'});tasks.push(mixed.task);houses.push(...mixed.houses);Object.assign(relations,mixed.relations);
