@@ -14,10 +14,21 @@
   function searchMasterCommunities(keyword,cityId='610100'){const q=String(keyword||'').trim().toLowerCase();return q?get().masterCommunities.filter(c=>c.cityId===cityId&&!c.mergedInto&&[c.name,...(c.aliases||[])].some(v=>String(v).toLowerCase().includes(q))).sort((a,b)=>Number(b.name===q)-Number(a.name===q)||a.name.localeCompare(b.name,'zh-CN')).slice(0,10):[];}
   function house(source,id,community,price,room,area,owner=false){const city='西安',cityId='610100',domain=source==='贝壳'?'ke.com':'anjuke.com',key=[domain,cityId,id].join('|');return {key,domain,source,city,cityId,sourceId:id,id:'H-XA-'+id,community,...communityIds(source,community),firstIngestTrigger:'platform_task',title:community+' '+room+'室 南北通透',price,room,area,bath:2,channel:'第三方',district:'浐灞国际港',block:'浐河西路',status:'上架',updatedAt:'2026-10-22 09:20:00',collectedAt:'2026-10-22 09:20:00',shortLink:'https://m.house365.com/house/H-XA-'+id,owner};}
   function seed(){const h1=house('贝壳','101140402577','御锦城',108,3,94.06),h2=house('安居客','S4624826410476559','保利心语花园',156,3,112),h3=house('贝壳','101139343423','金地湖城大境',218,4,136),h4=house('安居客','S8624826410476521','龙湖香醍国际',188,3,128);h4.otherOnly=true;return {version:2,masterCommunities:masterCommunitySeed(),brokers:{[OWNER]:{id:OWNER,name:'张经理',city:'西安'},'broker-demo-2':{id:'broker-demo-2',name:'李经理',city:'西安'}},houses:[h1,h2,h3,h4],relations:{[OWNER+'|'+h1.key]:{active:true,associatedAt:'2026-10-22 09:20:00',updatedAt:'2026-10-22 09:20:00',entry:'app'},[OWNER+'|'+h2.key]:{active:true,associatedAt:'2026-10-22 09:20:00',updatedAt:'2026-10-22 09:20:00',entry:'chat'},['broker-demo-2|'+h1.key]:{active:true,associatedAt:'2026-10-22 09:22:00',updatedAt:'2026-10-22 09:22:00',entry:'private'}},revisions:{},tasks:[],refreshes:[]};}
-  function get(){try{const s=JSON.parse(localStorage.getItem(KEY))||seed();let changed=false;if(!s.masterCommunities){s.masterCommunities=masterCommunitySeed();changed=true;}for(const r of Object.values(s.relations)){if(Object.hasOwn(r,'recommended')){delete r.recommended;changed=true;}}for(const h of s.houses){if(!h.firstIngestTrigger){h.firstIngestTrigger='platform_task';changed=true;}const ids=communityIds(h.source,h.community);for(const k of ['sourceCommunityId','masterCommunityId'])if(!Object.hasOwn(h,k)){h[k]=ids[k];changed=true;}}for(const t of s.tasks){if(t.admissionError){const message=t.admissionError.replace(/西安安家顾问/g,'安家顾问').replace('当前仅支持西安站点安家顾问上传。','您的账号暂未开通房源上传权限，请咨询客服。').replace('接口指定的西安城市客服','指定城市客服');if(t.items.length||t.admissionError!==message){t.items=[];t.sentKeys=[];t.admissionError=message;changed=true;}continue;}if(t.target)continue;let migrated=false;for(const i of t.items){if(i.status==='failed'&&i.failureCode==='already_in_my_houses'){i.status='ready';i.resultCode='already_in_my_houses';i.error='';delete i.failureCode;i.reusedRelation=true;i.collected=true;i.readyAt=t.finishedAt||t.time;migrated=changed=true;}}if(migrated&&t.status!=='cancelled'&&!active(t)){t.status=t.items.some(i=>i.status==='failed')?'partial':'completed';}}if(changed){s.version=3;localStorage.setItem(KEY,JSON.stringify(s));}return s;}catch{return seed()}}
+  function get(){try{const s=JSON.parse(localStorage.getItem(KEY))||seed();let changed=false;if(!s.masterCommunities){s.masterCommunities=masterCommunitySeed();changed=true;}for(const r of Object.values(s.relations)){if(Object.hasOwn(r,'recommended')){delete r.recommended;changed=true;}}for(const h of s.houses){if(!h.firstIngestTrigger){h.firstIngestTrigger='platform_task';changed=true;}const ids=communityIds(h.source,h.community);for(const k of ['sourceCommunityId','masterCommunityId'])if(!Object.hasOwn(h,k)){h[k]=ids[k];changed=true;}}const priorTasks=s.tasks.length;s.tasks=s.tasks.filter(t=>{if(t.admissionCode==='SERVICE_NOT_DESIGNATED'||['SERVICE_NOT_DESIGNATED','LINK_INCOMPLETE','SOURCE_NOT_SUPPORTED','LINK_NOT_DETAIL','HOUSE_CITY_NOT_ENABLED','RELATION_REMOVED'].includes(t.demoCase))return false;if(t.fromSelection)return true;if(!matchesUploadRule(t.text))return false;if(!t.admissionError){const len=t.items.length;t.items=t.items.filter(i=>!!matchSupportedUrl({url:i.url,position:0}));if(t.items.length!==len)changed=true;return t.items.length>0;}return true;});if(priorTasks!==s.tasks.length)changed=true;for(const t of s.tasks){if(t.admissionError){const message=t.admissionError.replace(/西安安家顾问/g,'安家顾问').replace('当前仅支持西安站点安家顾问上传。','您的账号暂未开通房源上传权限，请咨询客服。').replace('接口指定的西安城市客服','指定城市客服');if(t.items.length||t.admissionError!==message){t.items=[];t.sentKeys=[];t.admissionError=message;changed=true;}continue;}if(t.target)continue;let migrated=false;for(const i of t.items){if(i.status==='failed'&&i.failureCode==='already_in_my_houses'){i.status='ready';i.resultCode='already_in_my_houses';i.error='';delete i.failureCode;i.reusedRelation=true;i.collected=true;i.readyAt=t.finishedAt||t.time;migrated=changed=true;}}if(migrated&&t.status!=='cancelled'&&!active(t)){t.status=t.items.some(i=>i.status==='failed')?'partial':'completed';}}if(changed){s.version=3;localStorage.setItem(KEY,JSON.stringify(s));}return s;}catch{return seed()}}
   function save(s){try{localStorage.setItem(KEY,JSON.stringify(s))}catch{}listeners.forEach(f=>f(s));window.dispatchEvent(new CustomEvent('housing-demo-change',{detail:s}));return s;}
   if(!localStorage.getItem(KEY))save(seed());
-  function parse(text){const urls=[...String(text).matchAll(/https?:\/\/[^\s<>"“”]+/g)].map(m=>({url:m[0].replace(/[，。；、！!）)\]】]+$/g,''),position:m.index}));const seen=new Map(),items=[];urls.forEach((v,i)=>{if(!/ke\.com|anjuke\.com/.test(v.url))return;let u,domain='',c='',id='',error='';try{u=new URL(v.url);const h=u.hostname.toLowerCase();let m;if(h==='m.ke.com'&&(m=u.pathname.match(/^\/([^/]+)\/ershoufang\/(\d+)\.html\/?$/))){domain='ke.com';c=m[1];id=m[2]}else if((m=h.match(/^([a-z]+)\.ke\.com$/))&&m[1]!=='m'){domain='ke.com';c=m[1];id=u.pathname.match(/^\/ershoufang\/(\d+)\.html\/?$/)?.[1]||''}else if(h==='m.anjuke.com'&&(m=u.pathname.match(/^\/([^/]+)\/sale\/([SA]\d+)\/?$/))){domain='anjuke.com';c=m[1];id=m[2]}else if((m=h.match(/^([a-z]+)\.anjuke\.com$/))&&m[1]!=='m'){domain='anjuke.com';c=m[1];id=u.pathname.match(/^\/prop\/view\/([SA]\d+)\/?$/)?.[1]||''}else error='不是本期支持的房源详情入口';}catch{error='链接不完整，请检查房源地址'}const city=cities[c];if(!error&&!city)error='无法识别链接城市';if(!error&&!id)error='未识别到房源ID，请提供完整详情链接';if(!error&&city.name!=='西安')error='当前仅开放西安站点';const key=domain&&city&&id?[domain,city.id,id].join('|'):'invalid-'+i;if(seen.has(key)&&!error){seen.get(key).duplicates++;return}const item={...v,key,domain,city:city?.name||'',cityId:city?.id||'',sourceId:id,source:domain==='ke.com'?'贝壳':'安居客',error,status:error?'failed':'waiting',duplicates:0};seen.set(key,item);items.push(item)});return items;}
+  // Data-platform whitelist shared by entry recognition and accepted-request parsing.
+  const recognitionRules=Object.freeze({sources:['ke.com','anjuke.com'],cities:['610100'],hosts:['xa.ke.com','m.ke.com','xian.anjuke.com','m.anjuke.com']});
+  function messageUrls(text){return [...String(text).matchAll(/https?:\/\/[^\s<>"“”]+/g)].map(m=>({url:m[0].replace(/[，。；、！!）)\]】]+$/g,''),position:m.index}));}
+  function matchSupportedUrl(v){try{const u=new URL(v.url),host=u.hostname.toLowerCase();if(u.username||u.password||u.port||!recognitionRules.hosts.includes(host))return null;let m,c='',id='',domain='';
+    if(host==='xa.ke.com'&&(m=u.pathname.match(/^\/ershoufang\/(\d+)\.html\/?$/))){c='xa';id=m[1];domain='ke.com';}
+    else if(host==='m.ke.com'&&(m=u.pathname.match(/^\/(xa)\/ershoufang\/(\d+)\.html\/?$/))){c=m[1];id=m[2];domain='ke.com';}
+    else if(host==='m.anjuke.com'&&(m=u.pathname.match(/^\/(xa)\/sale\/([SA]\d+)\/?$/))){c=m[1];id=m[2];domain='anjuke.com';}
+    else if(host==='xian.anjuke.com'&&(m=u.pathname.match(/^\/prop\/view\/([SA]\d+)\/?$/))){c='xian';id=m[1];domain='anjuke.com';}
+    if(!id)return null;const city=cities[c];return {...v,key:[domain,city.id,id].join('|'),domain,city:city.name,cityId:city.id,sourceId:id,source:domain==='ke.com'?'贝壳':'安居客'};
+  }catch{return null;}}
+  function matchesUploadRule(text){return messageUrls(text).some(v=>!!matchSupportedUrl(v));}
+  function parse(text){const seen=new Map(),items=[];for(const v of messageUrls(text)){const item=matchSupportedUrl(v);if(!item)continue;if(seen.has(item.key)){seen.get(item.key).duplicates++;continue;}Object.assign(item,{status:'waiting',error:'',duplicates:0});seen.set(item.key,item);items.push(item);}return items;}
   const relation=(s,key)=>s.relations[OWNER+'|'+key];
   const owns=(s,key)=>!!relation(s,key)?.active;
   // APP查询范围按真实来源判断；安居客仅本人列表已有可见，界面渠道仍统一为第三方。
@@ -29,11 +40,13 @@
   const sameDestination=(t,entry,target,session)=>t.entry===entry&&t.target===target&&(!target||t.session===session);
   function create(text,entry='app',target='',opt={}){
     const s=get(),session=opt.session||(entry==='private'?'wecom-xa':'lin');
-    // 先校验上传准入，失败仅留原始消息；不解析链接、统计套数或创建逐套处理项。
-    const admissionError=entry==='private'?(!opt.recordViewer||opt.registered===false?'仅支持已入驻平台的安家顾问上传，请先核对您的有客账号。':opt.brokerCity&&opt.brokerCity!=='西安'?'您的账号暂未开通房源上传权限，请咨询客服。':opt.serviceConfigured===false||opt.serviceCity&&opt.serviceCity!=='西安'?'请将房源链接发送给指定城市客服。':''):'';
-    if(admissionError){const id='UP-'+Date.now().toString(36)+'-'+Math.random().toString(36).slice(2,5);s.tasks.push({id,text,entry,target:'',recordViewer:opt.recordViewer||'',owner:opt.recordViewer||'',city:'西安',cityId:'610100',submitterName:s.brokers[opt.recordViewer]?.name||'身份未确认',created:Date.now(),time:stamp(),finishedAt:stamp(),status:'partial',admissionError,items:[],sentKeys:[],session});save(s);window.HousingDemo.lastCreate={reused:false,id};return id;}
+    if(entry==='private'&&(opt.serviceConfigured===false||opt.serviceCity&&opt.serviceCity!=='西安')){window.HousingDemo.lastCreate={ignored:true,reason:'ordinary_message'};return null;}
+    if(!matchesUploadRule(text)){window.HousingDemo.lastCreate={ignored:true,reason:'ordinary_message'};return null;}
+    const account=entry==='private'?(opt.recordViewer||''):OWNER;
+    window.HousingDemo.lastSubmission={text,entry,brokerAccountId:account,brokerName:s.brokers[account]?.name||'',brokerCity:opt.brokerCity||s.brokers[account]?.city||'',originMessageId:opt.originMessageId||'',serviceAccountId:entry==='private'?(opt.serviceAccountId||'wecom-service-xa'):'',session};
+    const admissionError=(!account||opt.registered===false||opt.identityVerified===false||opt.brokerCity&&opt.brokerCity!=='西安')?'当前账号不符合传房条件，请确认使用已入驻平台的安家顾问账号，或咨询客服。':'';
+    if(admissionError){const id='UP-'+Date.now().toString(36)+'-'+Math.random().toString(36).slice(2,5);s.tasks.push({id,text,entry,target:'',recordViewer:account,owner:account,city:'西安',cityId:'610100',submitterName:s.brokers[account]?.name||'身份未确认',created:Date.now(),time:stamp(),finishedAt:stamp(),status:'partial',admissionCode:'UPLOAD_IDENTITY_INELIGIBLE',admissionError,items:[],sentKeys:[],session});save(s);window.HousingDemo.lastCreate={reused:false,id};return id;}
     let items=parse(text);
-    if(!items.length)return null;
 
     // 原消息与房源明细沿用现有记录；执行中的来源处理按识别键复用，不新建重复采集任务。
     const prior=s.tasks.filter(t=>active(t));
@@ -53,7 +66,7 @@
     if(h.status==='下架'){item.status='failed';item.error='来源房源已失效，暂不可用';item.associationStatus='not_started';return;}
     if(t.entry==='private'&&!t.owner){item.status='failed';item.associationStatus='needs_identity';item.error='房源已收录，尚未确认您的有客账号，未完成上传';item.events.push({label:item.error,time:stamp()});return;}
     if(t.owner){const rk=t.owner+'|'+item.key;
-      if((s.revisions[rk]||0)!==item.revision){item.status='failed';item.associationStatus='failed';item.error='房源已从我的房源删除，未继续原处理';return;}
+      if((s.revisions[rk]||0)!==item.revision){item.status='cancelled';item.excluded=true;item.error='已取消';return;}
       const old=s.relations[rk];
       if(t.failAssociation){item.status='failed';item.associationStatus='failed';item.error='房源已收录，暂未加入我的房源，请稍后重试';item.events.push({label:item.error,time:stamp()});return;}
       item.reusedRelation=!!old?.active;const now=stamp();
@@ -69,7 +82,7 @@
   function advance(){const s=get();let changed=false;
     for(const t of s.tasks){if(t.demoSnapshot||t.fromSelection||!active(t))continue;
       const item=t.items.find(i=>!i.excluded&&i.status!=='failed'&&(t.target?!['sent','reused'].includes(i.sendStatus):i.status!=='ready'));
-      if(!item){t.status=t.items.some(i=>!i.excluded&&i.status==='failed')?'partial':t.target?'sent':'completed';t.finishedAt=stamp();changed=true;continue;}
+      if(!item){t.status=t.items.some(i=>i.status==='cancelled')?'cancelled':t.items.some(i=>!i.excluded&&i.status==='failed')?'partial':t.target?'sent':'completed';t.finishedAt=stamp();changed=true;continue;}
       if(!item.startedAt){item.startedAt=Date.now();item.events.push({label:'开始串行处理本套房源',time:stamp()});changed=true;}
       if(item.deliveryTaskId){const original=s.tasks.find(x=>x.id===item.deliveryTaskId),ref=original?.items.find(x=>x.key===item.key);
         if(ref&&['sent','reused'].includes(ref.sendStatus)){const h=s.houses.find(h=>h.key===item.key);if(h)finish(s,t,item,h,true);item.sendStatus='reused';item.deliveryReused=true;item.sentAt=ref.sentAt;item.events.push({label:'原会话已发送，本次重复项不再发送',time:stamp()});changed=true;continue;}
@@ -80,7 +93,7 @@
       if(item.status==='ready'&&t.target){
         if(!item.sendStarted){item.sendStarted=Date.now();item.sendStatus='sending';changed=true;}
         else if(Date.now()-item.sendStarted>500){const rk=OWNER+'|'+item.key;
-          if(t.owner&&(!owns(s,item.key)||(s.revisions[rk]||0)!==item.revision)){item.status='failed';item.sendStatus='failed';item.error='房源已从我的房源删除，未发送本套房源';}
+          if(t.owner&&(!owns(s,item.key)||(s.revisions[rk]||0)!==item.revision)){item.sendStatus='failed';item.error='房源已从我的房源删除，未发送本套房源';}
           else if(t.failSend){item.status='failed';item.error='本套消息发送失败，可重试发送';item.sendStatus='failed';}
           else{item.sendStatus='sent';item.sentAt=stamp();item.sentAtMs=Date.now();if(!t.sentKeys.includes(item.key))t.sentKeys.push(item.key);item.events.push({label:'本套小程序房源已发送',time:item.sentAt});}changed=true;
         }continue;
@@ -144,64 +157,56 @@
     }
     return state;
   }
-  window.HousingDemo={get,save,platformState,parse,create,retry,retrySend,stages,cancel,unlink,refresh,owns,allowed,relation,uploadOrder,communityIds,searchMasterCommunities,subscribe:sub,sample,owner:OWNER,reset:()=>save(seed()),stamp,KEY};
+  window.HousingDemo={get,save,platformState,parse,recognitionRules,matchesUploadRule,create,retry,retrySend,stages,cancel,unlink,refresh,owns,allowed,relation,uploadOrder,communityIds,searchMasterCommunities,subscribe:sub,sample,owner:OWNER,reset:()=>save(seed()),stamp,KEY};
   setInterval(advance,700);
 })();
 
-/* Product failure reasons and deterministic fixtures for prototype regression only. */
+
+/* Upload-record failure mapping. This shared file simulates the data-platform result in the prototypes. */
 (() => {
- const H=window.HousingDemo;
+ const H=window.HousingDemo,identityText='当前账号不符合传房条件，请确认使用已入驻平台的安家顾问账号，或咨询客服。',failedText='暂时无法完成上传，请稍后重试或咨询客服。';
  const rows=[
- ['IDENTITY_UNCONFIRMED','身份未确认','request','无法确认您的安家顾问身份，请核对有客账号。','核对有客账号，确认身份后重新提交。',false],
- ['NOT_REGISTERED','未入驻平台','request','仅支持已入驻平台的安家顾问上传。','完成平台入驻后重新提交。',false],
- ['BROKER_CITY_NOT_ENABLED','账号城市未开通','request','您的账号暂未开通房源上传权限。','核对账号业务城市与上传权限。',false],
- ['SERVICE_NOT_DESIGNATED','接收客服不符','request','请将房源链接发送给指定城市客服。','按现有接口对应的城市客服重新提交。',false],
- ['LINK_INCOMPLETE','链接不完整','item','房源链接不完整，请提供包含城市和房源编号的完整详情链接。','复制完整房源详情链接后重新提交。',false],
- ['SOURCE_NOT_SUPPORTED','来源不支持','item','暂不支持此来源的房源链接。','改用本期支持来源的房源详情链接。',false],
- ['LINK_NOT_DETAIL','非房源详情链接','item','该链接不是房源详情页，请提供单套房源详情链接。','打开单套房源详情页后重新复制链接。',false],
- ['HOUSE_CITY_NOT_ENABLED','房源城市未开放','item','该房源所属城市暂未开放上传。','核对房源城市后重新提交。',false],
- ['SOURCE_UNAVAILABLE','来源房源已失效','item','来源房源已下架、删除或失效，暂不可用。','核实源站房源状态；不得自动恢复或当作采集暂时失败。',false],
- ['SOURCE_FETCH_FAILED','来源采集失败','item','本次来源采集未完成，请稍后重试。','保留已有数据，按原请求重试未完成项。',true],
- ['BUSINESS_PRODUCTION_FAILED','业务房源生成失败','item','来源已收录，业务房源生成未完成，请稍后重试。','保留来源结果，从业务房源生成继续。',true],
- ['LAKEHOUSE_SYNC_FAILED','湖仓同步失败','item','业务房源已生成，数据同步未完成，请稍后重试。','保留业务房源，只恢复未完成的数据同步。',true],
- ['BROKER_ASSOCIATION_FAILED','加入我的房源失败','item','房源已就绪，加入我的房源未完成，请稍后重试。','保留就绪房源，只重试未完成的本人关系。',true],
- ['RELATION_REMOVED','处理中本人已删除','item','该房源已从我的房源删除，原上传请求已停止。','不得由旧回调重新加入；需要时主动重新提交链接。',false],
- ['UPLOAD_FAILED_UNKNOWN','失败原因待核实','item','本次上传未完成，原因待核实。','联系客服并提供原请求编号，不推断为下架或要求修改有效链接。',false]
+ ['UPLOAD_IDENTITY_INELIGIBLE','传房身份不符合','request',identityText,'传房身份不符合','核对已入驻的安家顾问账号或咨询客服。',false],
+ ['SOURCE_UNAVAILABLE','来源房源已失效','item','原房源已下架或失效，请确认房源有效后重新上传。','源站已明确返回房源下架、删除或失效。','确认房源有效后重新上传，或咨询客服。',false],
+ ['SOURCE_FETCH_FAILED','来源采集失败','item',failedText,'来源访问或采集失败，未完成本次房源采集。','稍后重试或咨询客服。',true],
+ ['BUSINESS_PRODUCTION_FAILED','业务房源生成失败','item',failedText,'来源数据已收录，业务房源生成失败。','稍后重试或咨询客服。',true],
+ ['LAKEHOUSE_SYNC_FAILED','湖仓同步失败','item',failedText,'业务房源已生成，湖仓同步失败。','稍后重试或咨询客服。',true],
+ ['BROKER_ASSOCIATION_FAILED','加入我的房源失败','item',failedText,'房源数据已就绪，目标B端账号的本人房源关系写入失败。','稍后重试或咨询客服。',true]
  ];
- const reasons=Object.fromEntries(rows.map(([code,label,scope,reason,action,retryable])=>[code,{code,label,scope,reason,action,retryable}]));
+ const reasons=Object.fromEntries(rows.map(([code,label,scope,reason,detail,action,retryable])=>[code,{code,label,scope,reason,detail,action,retryable,brokerLabel:scope==='request'?'传房身份不符合':code==='SOURCE_UNAVAILABLE'?'房源已下架或失效':'房源上传失败'}]));
+ reasons.UPLOAD_FAILED_UNKNOWN={code:'UPLOAD_FAILED_UNKNOWN',label:'上传处理异常',scope:'item',reason:failedText,detail:'本次上传处理异常，具体原因待排查。',action:'稍后重试或咨询客服。',retryable:true,brokerLabel:'房源上传失败'};
  H.failureReasons=Object.freeze(reasons);H.failureCases=rows.map(r=>reasons[r[0]]);
- // Compatibility with older local demo records. Real integrations return the reason code directly.
- function legacyCode(i){const text=i.error||'';return /已从我的房源删除/.test(text)?'RELATION_REMOVED':/失效|下架|删除.*不可用/.test(text)?'SOURCE_UNAVAILABLE':i.associationStatus==='failed'?'BROKER_ASSOCIATION_FAILED':/城市|站点/.test(text)?'HOUSE_CITY_NOT_ENABLED':/不完整|房源ID|缺少/.test(text)?'LINK_INCOMPLETE':/详情入口|不是.*详情/.test(text)?'LINK_NOT_DETAIL':/采集|更新未完成|来源暂时|来源.*访问/.test(text)?'SOURCE_FETCH_FAILED':'UPLOAD_FAILED_UNKNOWN';}
- H.failureFor=i=>{const r=reasons[i.failureCode]||reasons[legacyCode(i)];return {...r,reason:i.failureCode&&i.failureReason?i.failureReason:r.reason};};
- const platform=H.platformState;H.platformState=(raw=H.get())=>{const result=platform(raw);result.tasks.forEach(t=>{const src=raw.tasks.find(x=>x.id===t.id);if(t.admissionError){const code=src.admissionCode||(!src.owner?'IDENTITY_UNCONFIRMED':'NOT_REGISTERED'),r=reasons[code]||reasons.IDENTITY_UNCONFIRMED;t.admissionCode=r.code;t.admissionError=r.reason;t.actionSuggestion=r.action;}
- t.items.forEach(i=>{if(i.status==='failed'){const original=src.items.find(x=>x.key===i.key),r=H.failureFor(original||i);Object.assign(i,{failureCode:r.code,error:r.reason,actionSuggestion:r.action,canRetry:r.retryable});}else{delete i.failureCode;delete i.actionSuggestion;delete i.canRetry;}});});return result;};
- const create=H.create;H.create=(text,entry='app',target='',opt={})=>{const id=create(text,entry,target,opt);if(id&&entry==='private'){const s=H.get(),t=s.tasks.find(t=>t.id===id);if(t?.admissionError){t.admissionCode=!opt.recordViewer?'IDENTITY_UNCONFIRMED':opt.registered===false?'NOT_REGISTERED':opt.brokerCity&&opt.brokerCity!=='西安'?'BROKER_CITY_NOT_ENABLED':'SERVICE_NOT_DESIGNATED';t.admissionError=reasons[t.admissionCode].reason;H.save(s);}}return id;};
+ function legacyCode(i){const v=i.error||'';return /失效|下架|删除.*不可用/.test(v)?'SOURCE_UNAVAILABLE':i.associationStatus==='failed'?'BROKER_ASSOCIATION_FAILED':/采集|更新未完成|来源暂时|来源.*访问/.test(v)?'SOURCE_FETCH_FAILED':'UPLOAD_FAILED_UNKNOWN';}
+ H.failureFor=i=>reasons[i.failureCode]||reasons[legacyCode(i)];
+ const platform=H.platformState;H.platformState=(raw=H.get())=>{const result=platform(raw);result.tasks.forEach(t=>{const src=raw.tasks.find(x=>x.id===t.id);if(t.admissionError){const r=reasons.UPLOAD_IDENTITY_INELIGIBLE;t.admissionCode=r.code;t.admissionError=r.reason;t.admissionLabel=r.label;t.actionSuggestion=r.action;}
+  t.items.forEach(i=>{if(i.status==='failed'){const original=src.items.find(x=>x.key===i.key),r=H.failureFor(original||i);Object.assign(i,{failureCode:r.code,error:r.detail,failureLabel:r.label,brokerReason:r.reason,brokerFailureLabel:r.brokerLabel,actionSuggestion:r.action,canRetry:r.retryable});}else{delete i.failureCode;delete i.actionSuggestion;delete i.canRetry;}});
+ });return result;};
  H.uploadReply=(record,state=H.get())=>{
   if(record.admissionError)return '本次上传未受理：'+record.admissionError;
   const good=record.items.filter(i=>i.status==='ready'),bad=record.items.filter(i=>i.status==='failed'),lines=[];
-  if(record.status==='cancelled')lines.push('本次上传已取消，已上传成功'+good.length+'套，其余未继续处理。');
-  else if(bad.length)lines.push('本次上传'+(good.length?'部分完成':'未完成')+'：成功'+good.length+'套，失败'+bad.length+'套。');
+  if(record.status==='cancelled')lines.push('本次上传已取消，已上传成功'+good.length+'套，其余已停止。');
+  else if(bad.length)lines.push(good.length?'本次上传部分完成：成功'+good.length+'套，失败'+bad.length+'套。':'本次上传失败，共'+bad.length+'套。');
   else lines.push('本次上传完成，成功'+good.length+'套。');
   if(good.length){lines.push(good.map((i,n)=>{const h=state.houses.find(x=>x.key===i.key);return (n+1)+'. '+(h?h.title+' · '+h.area+'㎡ · '+h.price+'万':'房源 '+i.sourceId)}).join('\n'));lines.push('可前往365有客APP“房源管理→我的房源”查看。');}
-  if(bad.length)lines.push('未上传成功：\n'+bad.map((i,n)=>{const h=state.houses.find(x=>x.key===i.key);return (n+1)+'. '+(h?h.title:i.sourceId||'第'+(i.index+1)+'条链接')+'：'+i.error}).join('\n'));
+  if(bad.length)lines.push('未上传成功：\n'+bad.map((i,n)=>{const h=state.houses.find(x=>x.key===i.key);return (n+1)+'. '+i.url+'\n'+(i.brokerReason||H.failureFor(i).reason)}).join('\n'));
   return lines.join('\n\n');
  };
  let serial=0;
  H.scenarioSnapshot=(code,entry='app',opt={})=>{
   const r=reasons[code],mixed=code==='MIXED',allSuccess=code==='SUCCESS';if(!r&&!mixed&&!allSuccess)throw Error('Unknown demo case: '+code);
-  const no=++serial,id=opt.id||'EX-'+code+'-'+Date.now().toString(36)+'-'+no,owner=['IDENTITY_UNCONFIRMED','NOT_REGISTERED'].includes(code)?'':H.owner,now=Date.now(),time=H.stamp(),houses=[],relations={};
+  const no=++serial,id=opt.id||'EX-'+code+'-'+Date.now().toString(36)+'-'+no,owner=r?.scope==='request'?'':H.owner,now=Date.now(),time=H.stamp(),houses=[],relations={};
   const one=(kind,index)=>{const sourceId=String(101149700000+no*10+index),key='ke.com|610100|'+sourceId,url='https://xa.ke.com/ershoufang/'+sourceId+'.html',failure=kind==='SUCCESS'?null:reasons[kind];const i={key,domain:'ke.com',source:'贝壳',sourceId,city:'西安',cityId:'610100',url,index,status:failure?'failed':'ready',associationStatus:failure?'not_started':'associated',startedAt:now-1200,events:[]};
-   if(failure){Object.assign(i,{failureCode:failure.code,failureReason:failure.reason,error:failure.reason,canRetry:failure.retryable});if(kind==='LINK_INCOMPLETE'){i.url='https://m.ke.com/xa/ershoufang/';i.sourceId='';}if(kind==='SOURCE_NOT_SUPPORTED'){i.url='https://example.com/property/demo';i.source='其他来源';i.domain='example.com';i.sourceId='';i.city='';i.cityId='';}if(kind==='LINK_NOT_DETAIL'){i.url='https://xa.ke.com/ershoufang/';i.sourceId='';}if(kind==='HOUSE_CITY_NOT_ENABLED'){i.url='https://m.ke.com/sh/ershoufang/'+sourceId+'.html';i.city='上海';i.cityId='310100';}if(kind==='BROKER_ASSOCIATION_FAILED')i.associationStatus='failed';}
-   const withHouse=!failure||['SOURCE_UNAVAILABLE','LAKEHOUSE_SYNC_FAILED','BROKER_ASSOCIATION_FAILED','RELATION_REMOVED'].includes(kind);
+   if(failure){Object.assign(i,{failureCode:failure.code,error:failure.detail,canRetry:failure.retryable});if(kind==='BROKER_ASSOCIATION_FAILED')i.associationStatus='failed';}
+   const withHouse=!failure||['SOURCE_UNAVAILABLE','LAKEHOUSE_SYNC_FAILED','BROKER_ASSOCIATION_FAILED'].includes(kind);
    if(withHouse){const h={key,domain:'ke.com',source:'贝壳',sourceId,id:'H-XA-'+sourceId,city:'西安',cityId:'610100',community:'御锦城',title:'御锦城 3室 南北通透',room:3,area:94.06,bath:2,price:108+index,channel:'第三方',status:kind==='SOURCE_UNAVAILABLE'?'下架':'上架',lakehouseReady:kind!=='LAKEHOUSE_SYNC_FAILED',updatedAt:time,collectedAt:time,...H.communityIds('贝壳','御锦城'),firstIngestTrigger:'link_upload'};houses.push(h);i.houseId=h.id;i.collected=true;if(!failure){i.readyAt=time;i.associatedAt=time;relations[H.owner+'|'+key]={active:true,associatedAt:time,updatedAt:time,entry,requestId:id};}}
    return i;};
-  const items=r?.scope==='request'?[]:mixed?[one('SUCCESS',0),one('SOURCE_FETCH_FAILED',1),one('SOURCE_UNAVAILABLE',2)]:code==='SOURCE_NOT_SUPPORTED'&&entry==='private'?[one('SUCCESS',0),one(code,1)]:allSuccess?[one('SUCCESS',0),one('SUCCESS',1)]:[one(code,0)];
+  const items=r?.scope==='request'?[]:mixed?[one('SUCCESS',0),one('SOURCE_FETCH_FAILED',1),one('SOURCE_UNAVAILABLE',2)]:allSuccess?[one('SUCCESS',0),one('SUCCESS',1)]:[one(code,0)];
   const text=r?.scope==='request'?'请帮忙上传：\n'+H.sample.bk+'\n'+H.sample.ajk:'请帮忙上传：\n'+items.map(i=>i.url).join('\n');
   const task={id,owner,recordViewer:owner,submitterName:owner?'张经理':'身份未确认',entry,uploadEntry:entry==='private'?'wecom_service':opt.target?'app_chat':'app_upload',target:opt.target||'',session:entry==='private'?'wecom-xa':opt.session||'lin',text,created:now,time,finishedAt:time,status:allSuccess?'completed':'partial',items,sentKeys:[],demoSnapshot:true,demoCase:code};
   if(r?.scope==='request')Object.assign(task,{admissionCode:r.code,admissionError:r.reason});
   return {task,houses,relations,brokers:{[H.owner]:{id:H.owner,name:'张经理',city:'西安'}}};
  };
- H.demoCase=(code,entry='app',opt={})=>{const fixture=H.scenarioSnapshot(code,entry,opt),s=H.get();s.houses.push(...fixture.houses);Object.assign(s.relations,fixture.relations);s.tasks.push(fixture.task);H.save(s);return fixture.task.id;};
- const retry=H.retry;H.retry=id=>{const s=H.get(),t=s.tasks.find(t=>t.id===id);if(!t||!t.items.some(i=>i.status==='failed'&&H.failureFor(i).retryable))return;const blocked=t.items.filter(i=>i.status==='failed'&&!H.failureFor(i).retryable).map(i=>[i.key,i.excluded]);blocked.forEach(([key])=>{t.items.find(i=>i.key===key).excluded=true;});delete t.demoSnapshot;H.save(s);retry(id);const next=H.get(),request=next.tasks.find(t=>t.id===id);blocked.forEach(([key,excluded])=>{const i=request.items.find(i=>i.key===key);if(excluded===undefined)delete i.excluded;else i.excluded=excluded;});H.save(next);};
+ H.demoCase=(code,entry='app',opt={})=>{const f=H.scenarioSnapshot(code,entry,opt),s=H.get();s.houses.push(...f.houses);Object.assign(s.relations,f.relations);s.tasks.push(f.task);H.save(s);return f.task.id;};
+ const retry=H.retry;H.retry=id=>{const s=H.get(),t=s.tasks.find(t=>t.id===id);if(!t||!t.items.some(i=>i.status==='failed'&&H.failureFor(i).retryable))return;const blocked=t.items.filter(i=>i.status==='failed'&&!H.failureFor(i).retryable).map(i=>[i.key,i.excluded]);blocked.forEach(([key])=>{t.items.find(i=>i.key===key).excluded=true;});delete t.demoSnapshot;t.items.filter(i=>i.status==='failed'&&H.failureFor(i).retryable).forEach(i=>{delete i.failureCode;delete i.failureReason;});H.save(s);retry(id);const next=H.get(),request=next.tasks.find(t=>t.id===id);blocked.forEach(([key,excluded])=>{const i=request.items.find(i=>i.key===key);if(excluded===undefined)delete i.excluded;else i.excluded=excluded;});H.save(next);};
  const allowed=H.allowed;H.allowed=(s,h)=>h?.lakehouseReady!==false&&allowed(s,h);
 })();

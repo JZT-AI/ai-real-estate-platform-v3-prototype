@@ -22,13 +22,12 @@
       else i.events.push({label:'本人房源关系写入完成，本套上传成功',time:at(9,4)});
     }
     if(kind==='collection-failed'){i.status='failed';i.startedAt=1;i.error='来源暂时无法访问，本套采集失败，未形成业务房源。';i.events.push({label:i.error,time:at(9,2)});}
-    if(kind==='invalid'){i.key='invalid-example-'+no;i.source='安居客';i.domain='anjuke.com';i.sourceId='';i.status='failed';i.error='链接缺少房源ID，请提供完整的西安房源详情链接。';i.url='https://m.anjuke.com/xa/sale/';i.events=[{label:i.error,time:at(9,1)}];}
     return i;
   }
   function request(id,title,entry,status,kinds,opt={}){
     const owner=opt.noIdentity?'':'example-broker-'+(entry==='private'?'zhang':'li'),time=at(8,tasks.length*4%60),items=kinds.map((kind,index)=>({...item(kind),index}));
     const uploadEntry=entry==='private'?'wecom_service':opt.chat?'app_chat':'app_upload',t={id:'EX-UP-'+id,demoSnapshot:true,demoTitle:title,city:'西安',cityId:'610100',owner,recordViewer:owner,submitterName:owner?brokers[owner].name:'身份未确认',entry,uploadEntry,status,time,created:Date.parse(time.replace(' ','T')+'+08:00'),items,text:'请帮忙上传以下房源：'+'\n'+items.map(i=>i.url).join('\n')};
-    for(const k of ['admissionError','text','duplicateSubmissions'])if(opt[k]!==undefined)t[k]=opt[k];
+    for(const k of ['admissionCode','admissionError','text','duplicateSubmissions'])if(opt[k]!==undefined)t[k]=opt[k];
     if(!['processing','sending'].includes(status))t.finishedAt=at(10,1);
     items.forEach(i=>{if(i.associationStatus==='associated'&&owner)relations[owner+'|'+i.key]={active:true,associatedAt:i.associatedAt,updatedAt:i.associatedAt,entry:entry==='private'?'private':uploadEntry==='app_chat'?'chat':'app',requestId:t.id};});
     tasks.push(t);return t;
@@ -39,10 +38,10 @@
   request('004','10套已受理，等待开始串行处理','app','processing',Array(10).fill('waiting'));
   request('005','10套串行：第1套上传成功，第2套处理中，其余等待','app','processing',['ready','processing',...Array(8).fill('waiting')],{chat:true,duplicateSubmissions:1});
   request('006','企微3套：1套成功、1套处理中、1套等待','private','processing',['ready','processing','waiting']);
-  request('007','APP5套：成功3套、失效/格式错误各1套','app','partial',['ready','ready','expired','duplicate','invalid']);
+  request('007','APP5套：成功3套、失效/采集失败各1套','app','partial',['ready','ready','expired','duplicate','collection-failed']);
   request('008','会话4套：3套上传成功、1套采集失败','app','partial',['ready','ready','collection-failed','ready'],{chat:true});
-  request('009','身份未通过，仅保留原始提交消息','private','partial',[],{noIdentity:true,admissionError:'无法确认已入驻平台的安家顾问身份，未受理、未解析房源链接。',text:'您好，请帮忙上传房源：\n'+window.HousingDemo.sample.bk+'\n'+window.HousingDemo.sample.ajk});
-  request('010','APP3套全部未完成，失败原因分别展示','app','partial',['collection-failed','association-failed','invalid']);
+  request('009','身份未通过，仅保留原始提交消息','private','partial',[],{noIdentity:true,admissionCode:'UPLOAD_IDENTITY_INELIGIBLE',admissionError:'当前账号不符合传房条件，请确认使用已入驻平台的安家顾问账号，或咨询客服。',text:'您好，请帮忙上传房源：\n'+window.HousingDemo.sample.bk+'\n'+window.HousingDemo.sample.ajk});
+  request('010','APP3套全部未完成，失败原因分别展示','app','partial',['collection-failed','association-failed','expired']);
   request('011','会话4套处理中取消，保留上传成功的第1套','app','cancelled',['ready','waiting','waiting','waiting'],{chat:true});
   request('012','独立上传2套尚未执行，已取消','app','cancelled',['waiting','waiting']);
   request('013','企微再次上传2套，均上传成功','private','completed',['duplicate','duplicate']);
