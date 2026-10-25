@@ -62,12 +62,12 @@
       if(!item.deliveryTaskId&&(!t.fromSelection||!old?.active)&&(!previous||t.created>=previous.created)){r.lastUploadRequestId=t.id;r.lastUploadedAt=now;r.updatedAt=now;}
       item.associationStatus='associated';item.associatedAt=r.associatedAt;item.error='';delete item.resultCode;item.events.push({label:'本人房源关系已确认，本次上传成功',time:now});
     }
-    item.status='ready';item.readyAt=stamp();item.events.push({label:t.target?'本套已就绪，等待发送':'本套收录并关联完成，可通知经纪人',time:stamp()});
+    h.lakehouseReady=true;item.status='ready';item.readyAt=stamp();item.events.push({label:t.target?'本套已就绪，等待发送':'本套收录并关联完成，可通知经纪人',time:stamp()});
   }
   function step(s,t,item,stage){if(item.status==='failed'||item.status==='ready')return;const labels=['识别通过','来源入库，立即启动业务房源生成及来源小区挂接','业务房源实体已形成','湖仓已有房源数据，下游可消费；小区治理独立推进'];const states=['identified','source','business','ready'];const previous=['waiting','identified','source','business'].indexOf(item.status);const target=Math.min(stage,3);if(target<=previous-1)return;const n=Math.min(previous,3);if(n<0)return;if(n===1&&item.failOnce){item.status='failed';item.error='采集暂时失败（演示异常），可重试';item.events.push({label:item.error,time:stamp()});return}item.status=states[n];if(n===1){item.sourceIngestedAt=stamp();}item.events.push({label:labels[n],time:stamp()});if(n>=1){item.houseId='H-XA-'+item.sourceId;}
     if(n===3){let h=s.houses.find(h=>h.key===item.key);if(!h){h=resultFor(item);if(t.deferCommunity){h.masterCommunityId='';h.sourceCommunityId='';h.communityStatus='pending';delete h.shortLink;}h.collectedAt=item.sourceIngestedAt||stamp();h.updatedAt=stamp();h.relationUpdatedAt=h.updatedAt;s.houses.push(h)}h.sourceCheckedAtMs=Date.now();item.sourceCheck='collected';finish(s,t,item,h)}}
   function advance(){const s=get();let changed=false;
-    for(const t of s.tasks){if(t.fromSelection||!active(t))continue;
+    for(const t of s.tasks){if(t.demoSnapshot||t.fromSelection||!active(t))continue;
       const item=t.items.find(i=>!i.excluded&&i.status!=='failed'&&(t.target?!['sent','reused'].includes(i.sendStatus):i.status!=='ready'));
       if(!item){t.status=t.items.some(i=>!i.excluded&&i.status==='failed')?'partial':t.target?'sent':'completed';t.finishedAt=stamp();changed=true;continue;}
       if(!item.startedAt){item.startedAt=Date.now();item.events.push({label:'开始串行处理本套房源',time:stamp()});changed=true;}
@@ -146,4 +146,62 @@
   }
   window.HousingDemo={get,save,platformState,parse,create,retry,retrySend,stages,cancel,unlink,refresh,owns,allowed,relation,uploadOrder,communityIds,searchMasterCommunities,subscribe:sub,sample,owner:OWNER,reset:()=>save(seed()),stamp,KEY};
   setInterval(advance,700);
+})();
+
+/* Product failure reasons and deterministic fixtures for prototype regression only. */
+(() => {
+ const H=window.HousingDemo;
+ const rows=[
+ ['IDENTITY_UNCONFIRMED','身份未确认','request','无法确认您的安家顾问身份，请核对有客账号。','核对有客账号，确认身份后重新提交。',false],
+ ['NOT_REGISTERED','未入驻平台','request','仅支持已入驻平台的安家顾问上传。','完成平台入驻后重新提交。',false],
+ ['BROKER_CITY_NOT_ENABLED','账号城市未开通','request','您的账号暂未开通房源上传权限。','核对账号业务城市与上传权限。',false],
+ ['SERVICE_NOT_DESIGNATED','接收客服不符','request','请将房源链接发送给指定城市客服。','按现有接口对应的城市客服重新提交。',false],
+ ['LINK_INCOMPLETE','链接不完整','item','房源链接不完整，请提供包含城市和房源编号的完整详情链接。','复制完整房源详情链接后重新提交。',false],
+ ['SOURCE_NOT_SUPPORTED','来源不支持','item','暂不支持此来源的房源链接。','改用本期支持来源的房源详情链接。',false],
+ ['LINK_NOT_DETAIL','非房源详情链接','item','该链接不是房源详情页，请提供单套房源详情链接。','打开单套房源详情页后重新复制链接。',false],
+ ['HOUSE_CITY_NOT_ENABLED','房源城市未开放','item','该房源所属城市暂未开放上传。','核对房源城市后重新提交。',false],
+ ['SOURCE_UNAVAILABLE','来源房源已失效','item','来源房源已下架、删除或失效，暂不可用。','核实源站房源状态；不得自动恢复或当作采集暂时失败。',false],
+ ['SOURCE_FETCH_FAILED','来源采集失败','item','本次来源采集未完成，请稍后重试。','保留已有数据，按原请求重试未完成项。',true],
+ ['BUSINESS_PRODUCTION_FAILED','业务房源生成失败','item','来源已收录，业务房源生成未完成，请稍后重试。','保留来源结果，从业务房源生成继续。',true],
+ ['LAKEHOUSE_SYNC_FAILED','湖仓同步失败','item','业务房源已生成，数据同步未完成，请稍后重试。','保留业务房源，只恢复未完成的数据同步。',true],
+ ['BROKER_ASSOCIATION_FAILED','加入我的房源失败','item','房源已就绪，加入我的房源未完成，请稍后重试。','保留就绪房源，只重试未完成的本人关系。',true],
+ ['RELATION_REMOVED','处理中本人已删除','item','该房源已从我的房源删除，原上传请求已停止。','不得由旧回调重新加入；需要时主动重新提交链接。',false],
+ ['UPLOAD_FAILED_UNKNOWN','失败原因待核实','item','本次上传未完成，原因待核实。','联系客服并提供原请求编号，不推断为下架或要求修改有效链接。',false]
+ ];
+ const reasons=Object.fromEntries(rows.map(([code,label,scope,reason,action,retryable])=>[code,{code,label,scope,reason,action,retryable}]));
+ H.failureReasons=Object.freeze(reasons);H.failureCases=rows.map(r=>reasons[r[0]]);
+ // Compatibility with older local demo records. Real integrations return the reason code directly.
+ function legacyCode(i){const text=i.error||'';return /已从我的房源删除/.test(text)?'RELATION_REMOVED':/失效|下架|删除.*不可用/.test(text)?'SOURCE_UNAVAILABLE':i.associationStatus==='failed'?'BROKER_ASSOCIATION_FAILED':/城市|站点/.test(text)?'HOUSE_CITY_NOT_ENABLED':/不完整|房源ID|缺少/.test(text)?'LINK_INCOMPLETE':/详情入口|不是.*详情/.test(text)?'LINK_NOT_DETAIL':/采集|更新未完成|来源暂时|来源.*访问/.test(text)?'SOURCE_FETCH_FAILED':'UPLOAD_FAILED_UNKNOWN';}
+ H.failureFor=i=>{const r=reasons[i.failureCode]||reasons[legacyCode(i)];return {...r,reason:i.failureCode&&i.failureReason?i.failureReason:r.reason};};
+ const platform=H.platformState;H.platformState=(raw=H.get())=>{const result=platform(raw);result.tasks.forEach(t=>{const src=raw.tasks.find(x=>x.id===t.id);if(t.admissionError){const code=src.admissionCode||(!src.owner?'IDENTITY_UNCONFIRMED':'NOT_REGISTERED'),r=reasons[code]||reasons.IDENTITY_UNCONFIRMED;t.admissionCode=r.code;t.admissionError=r.reason;t.actionSuggestion=r.action;}
+ t.items.forEach(i=>{if(i.status==='failed'){const original=src.items.find(x=>x.key===i.key),r=H.failureFor(original||i);Object.assign(i,{failureCode:r.code,error:r.reason,actionSuggestion:r.action,canRetry:r.retryable});}else{delete i.failureCode;delete i.actionSuggestion;delete i.canRetry;}});});return result;};
+ const create=H.create;H.create=(text,entry='app',target='',opt={})=>{const id=create(text,entry,target,opt);if(id&&entry==='private'){const s=H.get(),t=s.tasks.find(t=>t.id===id);if(t?.admissionError){t.admissionCode=!opt.recordViewer?'IDENTITY_UNCONFIRMED':opt.registered===false?'NOT_REGISTERED':opt.brokerCity&&opt.brokerCity!=='西安'?'BROKER_CITY_NOT_ENABLED':'SERVICE_NOT_DESIGNATED';t.admissionError=reasons[t.admissionCode].reason;H.save(s);}}return id;};
+ H.uploadReply=(record,state=H.get())=>{
+  if(record.admissionError)return '本次上传未受理：'+record.admissionError;
+  const good=record.items.filter(i=>i.status==='ready'),bad=record.items.filter(i=>i.status==='failed'),lines=[];
+  if(record.status==='cancelled')lines.push('本次上传已取消，已上传成功'+good.length+'套，其余未继续处理。');
+  else if(bad.length)lines.push('本次上传'+(good.length?'部分完成':'未完成')+'：成功'+good.length+'套，失败'+bad.length+'套。');
+  else lines.push('本次上传完成，成功'+good.length+'套。');
+  if(good.length){lines.push(good.map((i,n)=>{const h=state.houses.find(x=>x.key===i.key);return (n+1)+'. '+(h?h.title+' · '+h.area+'㎡ · '+h.price+'万':'房源 '+i.sourceId)}).join('\n'));lines.push('可前往365有客APP“房源管理→我的房源”查看。');}
+  if(bad.length)lines.push('未上传成功：\n'+bad.map((i,n)=>{const h=state.houses.find(x=>x.key===i.key);return (n+1)+'. '+(h?h.title:i.sourceId||'第'+(i.index+1)+'条链接')+'：'+i.error}).join('\n'));
+  return lines.join('\n\n');
+ };
+ let serial=0;
+ H.scenarioSnapshot=(code,entry='app',opt={})=>{
+  const r=reasons[code],mixed=code==='MIXED',allSuccess=code==='SUCCESS';if(!r&&!mixed&&!allSuccess)throw Error('Unknown demo case: '+code);
+  const no=++serial,id=opt.id||'EX-'+code+'-'+Date.now().toString(36)+'-'+no,owner=['IDENTITY_UNCONFIRMED','NOT_REGISTERED'].includes(code)?'':H.owner,now=Date.now(),time=H.stamp(),houses=[],relations={};
+  const one=(kind,index)=>{const sourceId=String(101149700000+no*10+index),key='ke.com|610100|'+sourceId,url='https://xa.ke.com/ershoufang/'+sourceId+'.html',failure=kind==='SUCCESS'?null:reasons[kind];const i={key,domain:'ke.com',source:'贝壳',sourceId,city:'西安',cityId:'610100',url,index,status:failure?'failed':'ready',associationStatus:failure?'not_started':'associated',startedAt:now-1200,events:[]};
+   if(failure){Object.assign(i,{failureCode:failure.code,failureReason:failure.reason,error:failure.reason,canRetry:failure.retryable});if(kind==='LINK_INCOMPLETE'){i.url='https://m.ke.com/xa/ershoufang/';i.sourceId='';}if(kind==='SOURCE_NOT_SUPPORTED'){i.url='https://example.com/property/demo';i.source='其他来源';i.domain='example.com';i.sourceId='';i.city='';i.cityId='';}if(kind==='LINK_NOT_DETAIL'){i.url='https://xa.ke.com/ershoufang/';i.sourceId='';}if(kind==='HOUSE_CITY_NOT_ENABLED'){i.url='https://m.ke.com/sh/ershoufang/'+sourceId+'.html';i.city='上海';i.cityId='310100';}if(kind==='BROKER_ASSOCIATION_FAILED')i.associationStatus='failed';}
+   const withHouse=!failure||['SOURCE_UNAVAILABLE','LAKEHOUSE_SYNC_FAILED','BROKER_ASSOCIATION_FAILED','RELATION_REMOVED'].includes(kind);
+   if(withHouse){const h={key,domain:'ke.com',source:'贝壳',sourceId,id:'H-XA-'+sourceId,city:'西安',cityId:'610100',community:'御锦城',title:'御锦城 3室 南北通透',room:3,area:94.06,bath:2,price:108+index,channel:'第三方',status:kind==='SOURCE_UNAVAILABLE'?'下架':'上架',lakehouseReady:kind!=='LAKEHOUSE_SYNC_FAILED',updatedAt:time,collectedAt:time,...H.communityIds('贝壳','御锦城'),firstIngestTrigger:'link_upload'};houses.push(h);i.houseId=h.id;i.collected=true;if(!failure){i.readyAt=time;i.associatedAt=time;relations[H.owner+'|'+key]={active:true,associatedAt:time,updatedAt:time,entry,requestId:id};}}
+   return i;};
+  const items=r?.scope==='request'?[]:mixed?[one('SUCCESS',0),one('SOURCE_FETCH_FAILED',1),one('SOURCE_UNAVAILABLE',2)]:code==='SOURCE_NOT_SUPPORTED'&&entry==='private'?[one('SUCCESS',0),one(code,1)]:allSuccess?[one('SUCCESS',0),one('SUCCESS',1)]:[one(code,0)];
+  const text=r?.scope==='request'?'请帮忙上传：\n'+H.sample.bk+'\n'+H.sample.ajk:'请帮忙上传：\n'+items.map(i=>i.url).join('\n');
+  const task={id,owner,recordViewer:owner,submitterName:owner?'张经理':'身份未确认',entry,uploadEntry:entry==='private'?'wecom_service':opt.target?'app_chat':'app_upload',target:opt.target||'',session:entry==='private'?'wecom-xa':opt.session||'lin',text,created:now,time,finishedAt:time,status:allSuccess?'completed':'partial',items,sentKeys:[],demoSnapshot:true,demoCase:code};
+  if(r?.scope==='request')Object.assign(task,{admissionCode:r.code,admissionError:r.reason});
+  return {task,houses,relations,brokers:{[H.owner]:{id:H.owner,name:'张经理',city:'西安'}}};
+ };
+ H.demoCase=(code,entry='app',opt={})=>{const fixture=H.scenarioSnapshot(code,entry,opt),s=H.get();s.houses.push(...fixture.houses);Object.assign(s.relations,fixture.relations);s.tasks.push(fixture.task);H.save(s);return fixture.task.id;};
+ const retry=H.retry;H.retry=id=>{const s=H.get(),t=s.tasks.find(t=>t.id===id);if(!t||!t.items.some(i=>i.status==='failed'&&H.failureFor(i).retryable))return;const blocked=t.items.filter(i=>i.status==='failed'&&!H.failureFor(i).retryable).map(i=>[i.key,i.excluded]);blocked.forEach(([key])=>{t.items.find(i=>i.key===key).excluded=true;});delete t.demoSnapshot;H.save(s);retry(id);const next=H.get(),request=next.tasks.find(t=>t.id===id);blocked.forEach(([key,excluded])=>{const i=request.items.find(i=>i.key===key);if(excluded===undefined)delete i.excluded;else i.excluded=excluded;});H.save(next);};
+ const allowed=H.allowed;H.allowed=(s,h)=>h?.lakehouseReady!==false&&allowed(s,h);
 })();

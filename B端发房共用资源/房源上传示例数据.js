@@ -15,7 +15,7 @@
     if(['ready','association-failed','duplicate','expired'].includes(kind)){
       const community=names[(no-1)%names.length],house={key,domain,source,sourceId,id:'H-XA-'+sourceId,city:'西安',cityId:'610100',community,title:community+' 3室 南北通透',price:108+no,room:3,bath:2,area:95+no,channel:'第三方',district:'浐灞国际港',block:'浐河西路',status:kind==='expired'?'下架':'上架',collectedAt:at(9,2),updatedAt:at(9,3),shortLink:'https://m.house365.com/house/H-XA-'+sourceId};
       Object.assign(house,window.HousingDemo.communityIds(source,community),{firstIngestTrigger:kind==='duplicate'?'platform_task':'link_upload',relationUpdatedAt:at(9,4)});houses.push(house);Object.assign(i,{status:'ready',startedAt:1,collected:true,houseId:house.id,shortLink:house.shortLink,associationStatus:'associated',associatedAt:at(9,4),readyAt:at(9,4)});
-      i.events.push({label:'业务房源已供下游消费，平台短链就绪',time:at(9,3)});
+      i.events.push({label:'业务房源及湖仓数据已就绪',time:at(9,3)});
       if(kind==='association-failed'){i.status='failed';i.associationStatus='failed';delete i.associatedAt;delete i.readyAt;i.error='房源已收录，加入我的房源失败，未通知上传成功。';i.events.push({label:i.error,time:at(9,4)});}
       else if(kind==='duplicate'){i.status='ready';i.resultCode='already_in_my_houses';i.reusedHouse=true;i.reusedRelation=true;i.associatedAt=at(7,45);house.collectedAt=at(7,40);house.updatedAt=at(7,44);i.error='';i.events.push({label:'我的房源已有，复用现有房源和本人关系，处理成功',time:at(9,4)});}
       else if(kind==='expired'){i.status='failed';i.associationStatus='not_started';delete i.associatedAt;delete i.readyAt;i.error='来源房源已失效，暂不可用，未加入我的房源。';i.events.push({label:i.error,time:at(9,3)});}
@@ -46,5 +46,7 @@
   request('011','会话4套处理中取消，保留上传成功的第1套','app','cancelled',['ready','waiting','waiting','waiting'],{chat:true});
   request('012','独立上传2套尚未执行，已取消','app','cancelled',['waiting','waiting']);
   request('013','企微再次上传2套，均上传成功','private','completed',['duplicate','duplicate']);
+  for(const scenario of window.HousingDemo.failureCases){const f=window.HousingDemo.scenarioSnapshot(scenario.code,'private',{id:'EX-FAIL-'+scenario.code});tasks.push(f.task);houses.push(...f.houses);Object.assign(relations,f.relations);Object.assign(brokers,f.brokers);}
+  const mixed=window.HousingDemo.scenarioSnapshot('MIXED','private',{id:'EX-MIXED-RESULT'});tasks.push(mixed.task);houses.push(...mixed.houses);Object.assign(relations,mixed.relations);
   window.HousingUploadExamples={merge(state){const copy=JSON.parse(JSON.stringify({brokers,houses,relations,tasks}));return {...state,brokers:{...copy.brokers,...state.brokers},houses:[...state.houses,...copy.houses],relations:{...copy.relations,...state.relations},tasks:[...copy.tasks,...state.tasks]};},count:tasks.length};
 })();

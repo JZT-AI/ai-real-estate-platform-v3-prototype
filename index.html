@@ -1705,7 +1705,7 @@
               <div v-if="!housingActiveRequest.admissionError" class="grid grid-cols-2 gap-3 md:grid-cols-5" data-upload-counts><div v-for="metric in housingCountMetrics(housingActiveRequest)" :key="metric.label" class="rounded-xl border border-slate-200 bg-white p-4"><div class="text-xs text-slate-500">{{metric.label}}</div><div class="mt-2 text-xl font-semibold">{{metric.value}}</div><div v-if="metric.hint" class="mt-2 text-xs text-slate-500">{{metric.hint}}</div></div></div>
                             <panel v-if="!housingActiveRequest.admissionError" title="逐套房源明细"><div class="divide-y divide-slate-200"><section v-for="(i,n) in housingActiveRequest.items" :key="i.key" class="p-5" :data-upload-item="i.key"><div class="flex items-start justify-between gap-5"><div><div class="text-sm font-semibold">{{n+1}}. {{i.source}} · {{i.city || '城市未识别'}} · {{i.sourceId || '链接待补正'}}</div><p v-if="housingItemHouse(i)" class="mt-2 text-sm text-slate-600">{{housingItemHouse(i).title}} · {{housingItemHouse(i).area}}㎡ · {{housingItemHouse(i).price}}万</p><div v-if="housingItemHouse(i)" class="mt-2 font-mono text-xs text-slate-500">{{i.houseId}}</div><div v-else class="mt-2 text-xs text-slate-400">尚未形成业务房源</div></div><div class="flex items-center gap-5"><status-badge :text="housingItemLabel(housingActiveRequest,i)"></status-badge><button v-if="housingItemHouse(i)" @click="housingOpenFact(i.key)" class="text-sm text-blue-600" data-upload-view-house>查看房源</button></div></div>
                 
-                <div v-if="i.error" class="mt-4 rounded-md bg-amber-50 p-3 text-xs leading-6 text-amber-800">{{i.error}}</div>
+                <div v-if="i.error" :data-upload-failure="i.failureCode" class="mt-4 rounded-md bg-amber-50 p-3 text-xs leading-6 text-amber-800"><b>{{housingFailureLabel(i)}}</b><p class="mt-1">{{i.error}}</p></div>
               </section></div></panel>
 
             </section>
@@ -4768,6 +4768,7 @@ window.housingDataVm = createApp({
         housingRequestCounts(t){if(t.admissionError)return null;const done=t.items.filter(i=>i.status==='ready').length,failed=t.items.filter(i=>i.status==='failed').length,remaining=Math.max(0,t.items.length-done-failed);return {total:t.items.length,done,failed,pending:t.status==='cancelled'?0:remaining,cancelled:t.status==='cancelled'?remaining:0}},
         housingCountMetrics(t){const c=this.housingRequestCounts(t);if(!c)return [];return [{label:'房源总数',value:c.total},{label:'上传成功',value:c.done},{label:'待完成',value:c.pending},{label:'失败',value:c.failed},{label:'已取消',value:c.cancelled}]},
         housingItemLabel(t,i){if(i.status==='ready')return '上传成功';if(i.status==='failed')return i.associationStatus==='failed'?'关联失败':'上传失败';if(t.status==='cancelled')return '已取消';return i.startedAt?'处理中':'待处理'},
+        housingFailureLabel(i){return window.HousingDemo.failureReasons[i.failureCode]?.label||'上传未完成'},
         housingItemHouse(i){return this.housingState.houses.find(h=>h.key===i.key)},
         housingApplyFilters(){this.housingFilters={...this.housingFiltersDraft}},
         housingResetFilters(){const f={query:'',entry:'全部',status:'全部',start:'',end:''};this.housingFilters={...f};this.housingFiltersDraft={...f};this.housingRecordKey=''},
