@@ -2,7 +2,7 @@
 (() => {
   const KEY='365-housing-upload-demo-20261022-r3',OWNER='broker-demo-xa';
   const cities={xa:{id:'610100',name:'西安'},xian:{id:'610100',name:'西安'},nj:{id:'320100',name:'南京'},nanjing:{id:'320100',name:'南京'}};
-  const sample={bk:'https://xa.ke.com/ershoufang/101140402577.html?fb_expo_id=1165667476605612033',bkH5:'https://m.ke.com/xa/ershoufang/101139343423.html?shareSource=beike_app',ajk:'https://m.anjuke.com/xa/sale/A7534253838/?isauction=222',ajk2:'https://xian.anjuke.com/prop/view/S4624826410476559',collectionFailure:'https://xa.ke.com/ershoufang/101149999999.html',invalid:'https://m.anjuke.com/xa/sale/'};
+  const sample={bk:'https://xa.ke.com/ershoufang/101140402577.html?fb_expo_id=1165667476605612033',bkH5:'https://m.ke.com/xa/ershoufang/101139343423.html?shareSource=beike_app',ajk:'https://m.anjuke.com/xa/sale/A7534253838/?isauction=222',ajk2:'https://xian.anjuke.com/prop/view/S4624826410476559',ajkPC:"https://xa.anjuke.com/prop/view/A7552184167?auction=222&hpType=64&entry=102&position=0&kwtype=filter&now_time=1792981219&click_url=https%253A%252F%252Flego-click.anjuke.com%252Fcpaclick%253Ftarget%253Dszq3mi3draOWUvYfugF1pAqduh78uzt3rjmvPHbvPWEvrHT3PZ980v6YUykKuaY1uWcQPj7WradbPWKWsHEkrAcVmhuWnBdhuH0dmWTknj91uyNKrHTdPjDdrHDdnWNQnWbKTHELPjbYnjDkPWnOP1c3P1NKnHcOnjTknTDQnWbknjTkTHD_nHnKPj91THDLrHcOrjDznHbvn1mKPT7AEdqKN7KxHD-HR7qjND7xENGsTHDKnEDKsHDKEbP7Pj7DPYNVPjbknBdjPHmdsNFanHTVE1EOwjN3wWcdEHuDTHcQnHc3PjNzPj0vP19dn1nvn1nKP9DKnEDkPWKBuHmdnaYzPhcLsHw-nj0VrAwWnadbPhEkuyF-PW76nWcKnWDQnW9YPHcYP10OnH0LnHmYrTDznHDzrjEdnWELP1mvPWTOrHcQTEDKTEDKsEDKTE7aEYNYnNELwiYYrHTzsNndPWNVEbcQnadjPj-DPH6AnWRKPbEKnHczsWbvsWcdsWckn9DkTHTKTHD_nHnKXLYKnHTQPHNKnHTkPjbYn9D1PvR-uH0kPiYQujK-sHwbmycVmWwhmzYzuyF6mHTYPHR6m1NKTHEKTEDkTHE3nzkdrHcvsj9YP1cKnE78IyQ_TH0QmyN3mWRWPyu6uAR6PW0&spread=filtersearch_c&epauction=&stats_key=14982d11-8879-4ee0-993c-d0df74b59be9_0&from=from_esf_List_search&index=0",collectionFailure:'https://xa.ke.com/ershoufang/101149999999.html',invalid:'https://m.anjuke.com/xa/sale/'};
   // 固定采集失败样例，仅用于原型：按来源房源键匹配，重复提交保持相同结果。
   const collectionFailureKey='ke.com|610100|101149999999';
   // 仅供原型演示近期结果复用；正式采集时效由现有来源策略确定，PRD不承诺此时长。
@@ -20,13 +20,13 @@
   function save(s){try{localStorage.setItem(KEY,JSON.stringify(s))}catch{}listeners.forEach(f=>f(s));window.dispatchEvent(new CustomEvent('housing-demo-change',{detail:s}));return s;}
   if(!localStorage.getItem(KEY))save(seed());
   // Data-platform whitelist shared by entry recognition and accepted-request parsing.
-  const recognitionRules=Object.freeze({sources:['ke.com','anjuke.com'],cities:['610100'],hosts:['xa.ke.com','m.ke.com','xian.anjuke.com','m.anjuke.com']});
+  const recognitionRules=Object.freeze({sources:['ke.com','anjuke.com'],cities:['610100'],hosts:['xa.ke.com','m.ke.com','xa.anjuke.com','xian.anjuke.com','m.anjuke.com']});
   function messageUrls(text){return [...String(text).matchAll(/https?:\/\/[^\s<>"“”]+/g)].map(m=>({url:m[0].replace(/[，。；、！!）)\]】]+$/g,''),position:m.index}));}
   function matchSupportedUrl(v){try{const u=new URL(v.url),host=u.hostname.toLowerCase();if(u.username||u.password||u.port||!recognitionRules.hosts.includes(host))return null;let m,c='',id='',domain='';
     if(host==='xa.ke.com'&&(m=u.pathname.match(/^\/ershoufang\/(\d+)\.html\/?$/))){c='xa';id=m[1];domain='ke.com';}
     else if(host==='m.ke.com'&&(m=u.pathname.match(/^\/(xa)\/ershoufang\/(\d+)\.html\/?$/))){c=m[1];id=m[2];domain='ke.com';}
     else if(host==='m.anjuke.com'&&(m=u.pathname.match(/^\/(xa)\/sale\/([SA]\d+)\/?$/))){c=m[1];id=m[2];domain='anjuke.com';}
-    else if(host==='xian.anjuke.com'&&(m=u.pathname.match(/^\/prop\/view\/([SA]\d+)\/?$/))){c='xian';id=m[1];domain='anjuke.com';}
+    else if(['xa.anjuke.com','xian.anjuke.com'].includes(host)&&(m=u.pathname.match(/^\/prop\/view\/([SA]\d+)\/?$/))){c=host.split('.')[0];id=m[1];domain='anjuke.com';}
     if(!id)return null;const city=cities[c];return {...v,key:[domain,city.id,id].join('|'),domain,city:city.name,cityId:city.id,sourceId:id,source:domain==='ke.com'?'贝壳':'安居客'};
   }catch{return null;}}
   function matchesUploadRule(text){return messageUrls(text).some(v=>!!matchSupportedUrl(v));}
