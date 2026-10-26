@@ -145,7 +145,7 @@
   
   const sub=f=>{listeners.add(f);return()=>listeners.delete(f)};
   window.addEventListener('storage',e=>{if(e.key===KEY)listeners.forEach(f=>f(get()))});
-  // 数据平台的查询视图只接收上传与关系结果，不接收客户或消息投递信息。
+  // 共用演示状态模拟数据平台维护的上传记录与房源关联；查询视图剔除APP客户及消息投递信息。
   function platformState(raw=get()){
     const state={brokers:raw.brokers,masterCommunities:raw.masterCommunities,houses:raw.houses,relations:raw.relations,tasks:[]};
     for(const t of raw.tasks){
