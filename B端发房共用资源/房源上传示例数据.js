@@ -13,8 +13,8 @@
     const i={key,domain,source,sourceId,city:'西安',cityId:'610100',url,index:0,status:'waiting',associationStatus:'not_started',duplicates:0,revision:0,events:[{label:'识别通过，进入逐套处理',time:at(9,1)}],...extra};
     if(kind==='processing'){i.status='business';i.startedAt=1;i.events.push({label:'来源数据已收录，正在生产业务房源',time:at(9,2)});}
     if(['ready','association-failed','duplicate','expired'].includes(kind)){
-      const community=names[(no-1)%names.length],house={key,domain,source,sourceId,id:'H-XA-'+sourceId,city:'西安',cityId:'610100',community,title:community+' 3室 南北通透',price:108+no,room:3,bath:2,area:95+no,channel:'第三方',district:'浐灞国际港',block:'浐河西路',status:kind==='expired'?'下架':'上架',collectedAt:at(9,2),updatedAt:at(9,3),shortLink:'https://m.house365.com/house/H-XA-'+sourceId};
-      Object.assign(house,window.HousingDemo.communityIds(source,community),{firstIngestTrigger:kind==='duplicate'?'platform_task':'link_upload',relationUpdatedAt:at(9,4)});houses.push(house);Object.assign(i,{status:'ready',startedAt:1,collected:true,houseId:house.id,shortLink:house.shortLink,associationStatus:'associated',associatedAt:at(9,4),readyAt:at(9,4)});
+      const community=names[(no-1)%names.length],existing=houses.find(h=>h.key===key),house=existing||{key,domain,source,sourceId,id:'H-XA-'+sourceId,city:'西安',cityId:'610100',community,title:community+' 3室 南北通透',price:108+no,room:3,bath:2,area:95+no,channel:'第三方',district:'浐灞国际港',block:'浐河西路',status:kind==='expired'?'下架':'上架',collectedAt:at(9,2),updatedAt:at(9,3),shortLink:'https://m.house365.com/house/H-XA-'+sourceId};
+      if(!existing){Object.assign(house,window.HousingDemo.communityIds(source,community),{firstIngestTrigger:kind==='duplicate'?'platform_task':'link_upload',relationUpdatedAt:at(9,4)});houses.push(house);}Object.assign(i,{status:'ready',startedAt:1,collected:true,houseId:house.id,shortLink:house.shortLink,associationStatus:'associated',associatedAt:at(9,4),readyAt:at(9,4)});
       i.events.push({label:'业务房源及湖仓数据已就绪',time:at(9,3)});
       if(kind==='association-failed'){i.status='failed';i.associationStatus='failed';delete i.associatedAt;delete i.readyAt;i.error='房源已收录，加入我的房源失败，未通知上传成功。';i.events.push({label:i.error,time:at(9,4)});}
       else if(kind==='duplicate'){i.status='ready';i.resultCode='already_in_my_houses';i.reusedHouse=true;i.reusedRelation=true;i.associatedAt=at(7,45);house.collectedAt=at(7,40);house.updatedAt=at(7,44);i.error='';i.events.push({label:'我的房源已有，复用现有房源和本人关系，处理成功',time:at(9,4)});}
@@ -44,7 +44,8 @@
   request('010','APP3套全部未完成，失败原因分别展示','app','partial',['collection-failed','association-failed','expired']);
   request('013','企微再次上传2套，均上传成功','private','completed',['duplicate','duplicate']);
   request('014','安居客西安PC长链接，推广参数不影响房源识别','app','completed',['ready'],{urls:[window.HousingDemo.sample.ajkPC]});
+  request('015','四种链接样式：贝壳PC/H5、安居客PC/H5','app','completed',Array(4).fill('ready'),{urls:window.HousingDemo.linkSamples.map(x=>x.url)});
   for(const scenario of window.HousingDemo.failureCases){const f=window.HousingDemo.scenarioSnapshot(scenario.code,'private',{id:'EX-FAIL-'+scenario.code});tasks.push(f.task);houses.push(...f.houses);Object.assign(relations,f.relations);Object.assign(brokers,f.brokers);}
   const mixed=window.HousingDemo.scenarioSnapshot('MIXED','private',{id:'EX-MIXED-RESULT'});tasks.push(mixed.task);houses.push(...mixed.houses);Object.assign(relations,mixed.relations);
-  window.HousingUploadExamples={merge(state){const copy=JSON.parse(JSON.stringify({brokers,houses,relations,tasks}));return {...state,brokers:{...copy.brokers,...state.brokers},houses:[...state.houses,...copy.houses],relations:{...copy.relations,...state.relations},tasks:[...copy.tasks,...state.tasks]};},count:tasks.length};
+  window.HousingUploadExamples={merge(state){const copy=JSON.parse(JSON.stringify({brokers,houses,relations,tasks}));return {...state,brokers:{...copy.brokers,...state.brokers},houses:[...state.houses,...copy.houses.filter(h=>!state.houses.some(existing=>existing.key===h.key))],relations:{...copy.relations,...state.relations},tasks:[...copy.tasks,...state.tasks]};},count:tasks.length};
 })();
