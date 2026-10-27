@@ -192,7 +192,7 @@
   const good=record.items.filter(i=>i.status==='ready'),bad=record.items.filter(i=>i.status==='failed'),lines=[];
   if(bad.length)lines.push(good.length?'本次上传部分完成：成功'+good.length+'套，失败'+bad.length+'套。':'本次上传失败，共'+bad.length+'套。');
   else lines.push('本次上传完成，成功'+good.length+'套。');
-  if(good.length){lines.push(good.map((i,n)=>{const h=state.houses.find(x=>x.key===i.key);return (n+1)+'. '+(h?h.title+' · '+h.area+'㎡ · '+h.price+'万':'房源 '+i.sourceId)}).join('\n'));lines.push('可前往365有客APP“房源管理→我的房源”查看。');}
+  if(good.length){lines.push(good.map((i,n)=>{const h=state.houses.find(x=>x.key===i.key);return (n+1)+'. '+(h?h.title+' · '+h.area+'㎡ · '+h.price+'万':'房源 '+i.sourceId)}).join('\n'));if(record.entry==='private')lines.push('可前往365有客APP「我的 → 房源管理 → 我的房源」查看。');}
   if(bad.length)lines.push('未上传成功：\n'+bad.map((i,n)=>{const h=state.houses.find(x=>x.key===i.key);return (n+1)+'. '+i.url+'\n'+(i.brokerReason||H.failureFor(i).reason)}).join('\n'));
   return lines.join('\n\n');
  };
