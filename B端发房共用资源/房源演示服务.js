@@ -80,7 +80,7 @@
       if(!item.deliveryTaskId&&(!t.fromSelection||!old?.active)&&(!previous||t.created>=previous.created)){r.lastUploadRequestId=t.id;r.lastUploadedAt=now;r.updatedAt=now;}
       item.associationStatus='associated';item.associatedAt=r.associatedAt;item.error='';delete item.resultCode;item.events.push({label:'本人房源关系已确认，本次上传成功',time:now});
     }
-    h.lakehouseReady=true;item.status='ready';item.readyAt=stamp();item.events.push({label:t.target?'本套已就绪，等待发送':'本套收录并关联完成，可通知经纪人',time:stamp()});
+    h.lakehouseReady=true;item.status='ready';item.readyAt=stamp();item.events.push({label:t.target?'本套已就绪，等待发送':'本套收录并关联完成，可通知安家顾问',time:stamp()});
   }
   function step(s,t,item,stage){if(item.status==='failed'||item.status==='ready')return;const labels=['识别通过','来源入库，立即启动业务房源生成及来源小区挂接','业务房源实体已形成','湖仓已有房源数据，下游可消费；小区治理独立推进'];const states=['identified','source','business','ready'];const previous=['waiting','identified','source','business'].indexOf(item.status);const target=Math.min(stage,3);if(target<=previous-1)return;const n=Math.min(previous,3);if(n<0)return;item.status=states[n];if(n===1){item.sourceIngestedAt=stamp();item.sourceCommunityLinkedAt=stamp();item.communityRecognitionStartedAt=stamp();}item.events.push({label:labels[n],time:stamp()});if(n>=1){item.houseId='H-XA-'+item.sourceId;}
     if(n===3){let h=s.houses.find(h=>h.key===item.key);if(!h){h=resultFor(item);if(t.deferCommunity){h.masterCommunityId='';h.masterCommunityName='';h.communityStatus='pending';delete h.shortLink;}h.collectedAt=item.sourceIngestedAt||stamp();h.updatedAt=stamp();h.relationUpdatedAt=h.updatedAt;s.houses.push(h)}h.sourceCheckedAtMs=Date.now();item.sourceCheck='collected';finish(s,t,item,h)}}
@@ -136,7 +136,7 @@
     return [
       {label:'识别链接',state:invalid&&!i.sourceId?'failed':'done',text:invalid&&!i.sourceId?'链接需补正':'已识别'},
       {label:'收录房源',state:collected?'done':invalid?'failed':n>0||i.startedAt?'running':'waiting',text:collected?'已就绪':i.sourceCheck==='updating'?'更新中':i.reusingPending?'处理中':invalid?'处理失败':i.startedAt?'处理中':'等待前序房源'},
-      ...((t.owner||t.entry==='private')?[{label:audience==='platform'?'关联经纪人':'加入我的房源',state:i.associationStatus==='associated'||ready?'done':i.associationStatus==='failed'?'failed':'waiting',text:i.associationStatus==='needs_identity'?'待确认经纪人身份':i.associationStatus==='failed'?(audience==='platform'?'关联未成功':'尚未加入我的房源'):ready?(audience==='platform'?'已关联':'已加入我的房源'):'待房源可用'}]:[]),
+      ...((t.owner||t.entry==='private')?[{label:audience==='platform'?'关联安家顾问':'加入我的房源',state:i.associationStatus==='associated'||ready?'done':i.associationStatus==='failed'?'failed':'waiting',text:i.associationStatus==='needs_identity'?'待确认安家顾问身份':i.associationStatus==='failed'?(audience==='platform'?'关联未成功':'尚未加入我的房源'):ready?(audience==='platform'?'已关联':'已加入我的房源'):'待房源可用'}]:[]),
       ...(t.target?[{label:'转换卡片',state:ready?'done':'waiting',text:ready?'卡片已就绪':'待房源可用'},{label:'发送客户',state:sent?'done':i.sendStatus==='failed'?'failed':i.sendStatus==='sending'?'running':'waiting',text:sent?(i.deliveryReused?'原会话已发送':'已发送'):i.sendStatus==='failed'?'发送失败':i.sendStatus==='sending'?'发送中':'等待本套完成'}]:[])
     ];
   }
