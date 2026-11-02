@@ -17,7 +17,7 @@
       if(!existing){Object.assign(house,window.HousingDemo.communityIds(source,community),{firstIngestTrigger:kind==='duplicate'?'platform_task':'link_upload',relationUpdatedAt:at(9,4)});houses.push(house);}Object.assign(i,{status:'ready',startedAt:1,collected:true,houseId:house.id,shortLink:house.shortLink,associationStatus:'associated',associatedAt:at(9,4),readyAt:at(9,4)});
       i.events.push({label:'业务房源及湖仓数据已就绪',time:at(9,3)});
       if(kind==='association-failed'){i.status='failed';i.associationStatus='failed';delete i.associatedAt;delete i.readyAt;i.error='房源已收录，加入我的房源失败，未通知上传成功。';i.events.push({label:i.error,time:at(9,4)});}
-      else if(kind==='duplicate'){i.status='ready';i.resultCode='already_in_my_houses';i.reusedHouse=true;i.reusedRelation=true;i.associatedAt=at(7,45);house.collectedAt=at(7,40);house.updatedAt=at(7,44);i.error='';i.events.push({label:'我的房源已有，复用现有房源和本人关系，处理成功',time:at(9,4)});}
+      else if(kind==='duplicate'){i.status='ready';i.resultCode='already_in_my_houses';i.reusedHouse=true;i.reusedRelation=true;i.associatedAt=at(9,4);house.collectedAt=at(7,40);house.updatedAt=at(7,44);i.error='';i.events.push({label:'复用现有房源和本人关系，更新最近关联信息，本次上传成功',time:at(9,4)});}
       else if(kind==='expired'){i.status='failed';i.associationStatus='not_started';delete i.associatedAt;delete i.readyAt;i.error='来源房源已失效，暂不可用，未加入我的房源。';i.events.push({label:i.error,time:at(9,3)});}
       else i.events.push({label:'本人房源关系写入完成，本套上传成功',time:at(9,4)});
     }
@@ -29,7 +29,7 @@
     const uploadEntry=entry==='private'?'wecom_service':opt.chat?'app_chat':'app_upload',t={id:'EX-UP-'+id,demoSnapshot:true,demoTitle:title,city:'西安',cityId:'610100',owner,recordViewer:owner,submitterName:owner?brokers[owner].name:'身份未确认',entry,uploadEntry,status,time,created:Date.parse(time.replace(' ','T')+'+08:00'),items,text:'请帮忙上传以下房源：'+'\n'+items.map(i=>i.url).join('\n')};
     for(const k of ['admissionCode','admissionError','text','duplicateSubmissions'])if(opt[k]!==undefined)t[k]=opt[k];
     if(!['processing','sending'].includes(status))t.finishedAt=at(10,1);
-    items.forEach(i=>{if(i.associationStatus==='associated'&&owner)relations[owner+'|'+i.key]={active:true,associatedAt:i.associatedAt,updatedAt:i.associatedAt,entry:entry==='private'?'private':uploadEntry==='app_chat'?'chat':'app',requestId:t.id};});
+    items.forEach(i=>{if(i.associationStatus==='associated'&&owner)relations[owner+'|'+i.key]={active:true,associatedAt:i.associatedAt,updatedAt:i.associatedAt,entry:entry==='private'?'private':uploadEntry==='app_chat'?'chat':'app',requestId:t.id,lastUploadRequestId:t.id,lastUploadedAt:i.associatedAt};});
     tasks.push(t);return t;
   }
   request('001','企微一次上传3套，全部成功','private','completed',['ready','ready','ready']);
